@@ -55,7 +55,8 @@ public class EmailAlbum extends javax.swing.JFrame {
             addMouseListener(new MouseListener() {
 
                 public void mouseClicked(MouseEvent e) {
-                    if (!e.isPopupTrigger()) {
+                    repaint();
+                    if(!rightBtnMenu.isVisible()) {
                         next();
                     }
                 }
@@ -136,6 +137,8 @@ public class EmailAlbum extends javax.swing.JFrame {
 
         rightBtnMenu = new javax.swing.JPopupMenu();
         menuSavePicture = new javax.swing.JMenuItem();
+
+        rightBtnMenu.setLightWeightPopupEnabled(false);
 
         menuSavePicture.setText("Enregistrer");
         menuSavePicture.addActionListener(new java.awt.event.ActionListener() {
