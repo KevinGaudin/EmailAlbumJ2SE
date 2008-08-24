@@ -21,8 +21,6 @@ import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
-import javax.swing.filechooser.FileFilter;
-import javax.swing.filechooser.FileView;
 
 /**
  *
@@ -38,7 +36,9 @@ public class EmailAlbum {
         "com/kg/emailalbum/viewer/ui/EmailAlbum$3.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$4.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$5.class",
-        "com/kg/util/ImageUtil.class"
+        "com/kg/emailalbum/viewer/ui/EmailAlbum$6.class",
+        "com/kg/util/ImageUtil.class",
+        "com/kg/util/ImageUtil$1.class"
     };
     private static final String CONTENT_FILE = "com/kg/emailalbum/viewer/pictures/content";
     private JarOutputStream archive = null;
@@ -129,30 +129,7 @@ public class EmailAlbum {
             fileSelector = new JFileChooser();
         }
         fileSelector.setMultiSelectionEnabled(true);
-        fileSelector.addChoosableFileFilter(new FileFilter() {
-
-            public boolean accept(File f) {
-                if (f.isDirectory()) {
-                    return true;
-                }
-
-                String extension = ImageUtil.getExtension(f);
-                if (extension != null) {
-                    if (extension.equalsIgnoreCase(ImageUtil.jpeg) ||
-                            extension.equalsIgnoreCase(ImageUtil.jpg)) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-
-                return false;
-            }
-
-            public String getDescription() {
-                return "Pictures";
-            }
-        });
+        fileSelector.addChoosableFileFilter(ImageUtil.getJpegFilter());
         
         fileSelector.setAccessory(new ImagePreview(fileSelector));
         

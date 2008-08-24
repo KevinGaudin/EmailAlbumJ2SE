@@ -22,10 +22,18 @@
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="d8" green="e9" id="Control" palette="2" red="ec" type="palette"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Enregistrer"/>
+            <Property name="text" type="java.lang.String" value="Enregistrer cette image"/>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuSavePictureActionPerformed"/>
+          </Events>
+        </MenuItem>
+        <MenuItem class="javax.swing.JMenuItem" name="menuSaveAllPictures">
+          <Properties>
+            <Property name="text" type="java.lang.String" value="Enregistrer toutes les images"/>
+          </Properties>
+          <Events>
+            <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuSaveAllPicturesActionPerformed"/>
           </Events>
         </MenuItem>
       </SubComponents>

@@ -22,9 +22,6 @@ import java.util.TreeSet;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.event.PopupMenuEvent;
-import javax.swing.event.PopupMenuListener;
-import javax.swing.filechooser.FileFilter;
 
 /**
  *
@@ -35,6 +32,7 @@ public class EmailAlbum extends javax.swing.JFrame {
     SortedSet pictures = new TreeSet();
     Iterator iPics = null;
     BufferedImage currentImage = null;
+    String currentImageName = "";
     boolean popupJustHidden = false;
 
     /** Creates new form EmailAlbum */
@@ -115,7 +113,7 @@ public class EmailAlbum extends javax.swing.JFrame {
 
     private void display(String imageName) {
         try {
-            System.out.println("/com/kg/emailalbum/viewer/pictures/" + imageName);
+            currentImageName = imageName;
             currentImage = ImageIO.read(getClass().getResourceAsStream("/com/kg/emailalbum/viewer/pictures/" + imageName));
             repaint();
         } catch (IOException ex) {
@@ -143,6 +141,7 @@ public class EmailAlbum extends javax.swing.JFrame {
 
         rightBtnMenu = new javax.swing.JPopupMenu();
         menuSavePicture = new javax.swing.JMenuItem();
+        menuSaveAllPictures = new javax.swing.JMenuItem();
 
         rightBtnMenu.setBackground(java.awt.SystemColor.control);
         rightBtnMenu.setLightWeightPopupEnabled(false);
@@ -157,13 +156,21 @@ public class EmailAlbum extends javax.swing.JFrame {
         });
 
         menuSavePicture.setBackground(java.awt.SystemColor.control);
-        menuSavePicture.setText("Enregistrer");
+        menuSavePicture.setText("Enregistrer cette image");
         menuSavePicture.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 menuSavePictureActionPerformed(evt);
             }
         });
         rightBtnMenu.add(menuSavePicture);
+
+        menuSaveAllPictures.setText("Enregistrer toutes les images");
+        menuSaveAllPictures.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuSaveAllPicturesActionPerformed(evt);
+            }
+        });
+        rightBtnMenu.add(menuSaveAllPictures);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(null);
@@ -172,12 +179,16 @@ public class EmailAlbum extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
 private void rightBtnMenuPopupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightBtnMenuPopupMenuWillBecomeInvisible
-popupJustHidden = true;
+    popupJustHidden = true;
 }//GEN-LAST:event_rightBtnMenuPopupMenuWillBecomeInvisible
 
 private void menuSavePictureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuSavePictureActionPerformed
-saveCurrentImage();
+    saveCurrentImage();
 }//GEN-LAST:event_menuSavePictureActionPerformed
+
+private void menuSaveAllPicturesActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuSaveAllPicturesActionPerformed
+    saveAllImages();
+}//GEN-LAST:event_menuSaveAllPicturesActionPerformed
 
     /**
     * @param args the command line arguments
@@ -191,40 +202,44 @@ saveCurrentImage();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem menuSaveAllPictures;
     private javax.swing.JMenuItem menuSavePicture;
     private javax.swing.JPopupMenu rightBtnMenu;
     // End of variables declaration//GEN-END:variables
 
+    private void saveAllImages() {
+        JFileChooser fileSelector = new JFileChooser();
+        fileSelector.setMultiSelectionEnabled(false);
+        fileSelector.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        
+        int returnVal = fileSelector.showSaveDialog(null);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            File saveDir = fileSelector.getSelectedFile();
+            Iterator imagesToSave = pictures.iterator();
+            File saveFile = null;
+            BufferedImage thisImage = null;
+            String imageName = null;
+            while(imagesToSave.hasNext()) {
+                imageName = (String) imagesToSave.next();
+                saveFile = new File(saveDir, imageName);
+                try {
+                    thisImage = ImageIO.read(getClass().getResourceAsStream("/com/kg/emailalbum/viewer/pictures/" + imageName));
+                    ImageIO.write(thisImage, "jpeg", saveFile);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
+    }
+    // End of variables declaration
+
     private void saveCurrentImage() {
         JFileChooser fileSelector = new JFileChooser();
         fileSelector.setMultiSelectionEnabled(false);
-        fileSelector.setDialogType(JFileChooser.SAVE_DIALOG);
-        fileSelector.addChoosableFileFilter(new FileFilter() {
-
-            public boolean accept(File f) {
-                if (f.isDirectory()) {
-                    return true;
-                }
-
-                String extension = ImageUtil.getExtension(f);
-                if (extension != null) {
-                    if (extension.equalsIgnoreCase(ImageUtil.jpeg) ||
-                            extension.equalsIgnoreCase(ImageUtil.jpg)) {
-                        return true;
-                    } else {
-                        return false;
-                    }
-                }
-
-                return false;
-            }
-
-            public String getDescription() {
-                return "Pictures";
-            }
-        });
+        fileSelector.setSelectedFile(new File(currentImageName));
+        fileSelector.addChoosableFileFilter(ImageUtil.getJpegFilter());
         
-        int returnVal = fileSelector.showOpenDialog(null);
+        int returnVal = fileSelector.showSaveDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File saveFile = fileSelector.getSelectedFile();
             try {

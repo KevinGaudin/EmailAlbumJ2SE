@@ -9,6 +9,7 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import javax.swing.filechooser.FileFilter;
 
 /**
  *
@@ -76,4 +77,31 @@ public class ImageUtil {
         }
         return ext;
     }
+    
+    public static FileFilter getJpegFilter() {
+        return new FileFilter() {
+
+            public boolean accept(File f) {
+                if (f.isDirectory()) {
+                    return true;
+                }
+
+                String extension = ImageUtil.getExtension(f);
+                if (extension != null) {
+                    if (extension.equalsIgnoreCase(ImageUtil.jpeg) ||
+                            extension.equalsIgnoreCase(ImageUtil.jpg)) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }
+
+                return false;
+            }
+
+            public String getDescription() {
+                return "Jpeg Pictures";
+            }
+        };
+    } 
 }
