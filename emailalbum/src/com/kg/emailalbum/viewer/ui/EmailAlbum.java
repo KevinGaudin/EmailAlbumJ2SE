@@ -22,6 +22,8 @@ import java.util.TreeSet;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -33,6 +35,7 @@ public class EmailAlbum extends javax.swing.JFrame {
     SortedSet pictures = new TreeSet();
     Iterator iPics = null;
     BufferedImage currentImage = null;
+    boolean popupJustHidden = false;
 
     /** Creates new form EmailAlbum */
     public EmailAlbum() {
@@ -55,18 +58,21 @@ public class EmailAlbum extends javax.swing.JFrame {
             addMouseListener(new MouseListener() {
 
                 public void mouseClicked(MouseEvent e) {
-                    repaint();
-                    if(!rightBtnMenu.isVisible()) {
-                        next();
-                    }
                 }
 
                 public void mousePressed(MouseEvent e) {
+                    repaint();
                     maybeShowPopup(e);
                 }
 
                 public void mouseReleased(MouseEvent e) {
+                    repaint();
                     maybeShowPopup(e);
+                    if(!e.isPopupTrigger() && !popupJustHidden) {
+                        next();
+                    } else {
+                        popupJustHidden = false;
+                    }
                 }
 
                 public void mouseEntered(MouseEvent e) {
@@ -138,8 +144,19 @@ public class EmailAlbum extends javax.swing.JFrame {
         rightBtnMenu = new javax.swing.JPopupMenu();
         menuSavePicture = new javax.swing.JMenuItem();
 
+        rightBtnMenu.setBackground(java.awt.SystemColor.control);
         rightBtnMenu.setLightWeightPopupEnabled(false);
+        rightBtnMenu.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+            public void popupMenuCanceled(javax.swing.event.PopupMenuEvent evt) {
+            }
+            public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent evt) {
+                rightBtnMenuPopupMenuWillBecomeInvisible(evt);
+            }
+            public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent evt) {
+            }
+        });
 
+        menuSavePicture.setBackground(java.awt.SystemColor.control);
         menuSavePicture.setText("Enregistrer");
         menuSavePicture.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -154,8 +171,12 @@ public class EmailAlbum extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+private void rightBtnMenuPopupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent evt) {//GEN-FIRST:event_rightBtnMenuPopupMenuWillBecomeInvisible
+popupJustHidden = true;
+}//GEN-LAST:event_rightBtnMenuPopupMenuWillBecomeInvisible
+
 private void menuSavePictureActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuSavePictureActionPerformed
-    saveCurrentImage();
+saveCurrentImage();
 }//GEN-LAST:event_menuSavePictureActionPerformed
 
     /**
