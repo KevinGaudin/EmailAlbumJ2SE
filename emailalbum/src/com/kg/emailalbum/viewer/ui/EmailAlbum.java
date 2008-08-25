@@ -15,6 +15,7 @@ import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+//import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.SortedSet;
@@ -31,7 +32,7 @@ public class EmailAlbum extends javax.swing.JFrame {
 
     SortedSet pictures = new TreeSet();
     Iterator iPics = null;
-    BufferedImage currentImage = null;
+    BufferedImage currentImage = null, resizedImage = null, tmpBuf = null;
     String currentImageName = "";
     boolean popupJustHidden = false;
 
@@ -123,11 +124,12 @@ public class EmailAlbum extends javax.swing.JFrame {
 
     public void paint(Graphics g) {
         if (currentImage != null) {
-            BufferedImage resizedImage = ImageUtil.resize(currentImage, getSize());
-            g.clearRect(0, 0, getWidth(), getHeight());
+            resizedImage = ImageUtil.resize(currentImage, getSize());
+            tmpBuf = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
             int offsetX = (getWidth() - resizedImage.getWidth()) / 2;
             int offsetY = (getHeight() - resizedImage.getHeight()) / 2;
-            g.drawImage(resizedImage, offsetX, offsetY, null);
+            tmpBuf.getGraphics().drawImage(resizedImage, offsetX, offsetY, null);
+            g.drawImage(tmpBuf, 0, 0, null);
         }
     }
 
@@ -224,8 +226,12 @@ private void menuSaveAllPicturesActionPerformed(java.awt.event.ActionEvent evt) 
                 saveFile = new File(saveDir, imageName);
                 try {
                     thisImage = ImageIO.read(getClass().getResourceAsStream("/com/kg/emailalbum/viewer/pictures/" + imageName));
-                    ImageIO.write(thisImage, "jpeg", saveFile);
-                } catch (IOException ex) {
+                    ImageIO.write(thisImage, "jpg", saveFile);
+/*                   PrintWriter chkVer = new PrintWriter(new File(saveDir, "java.version"));
+                    String version = System.getProperty("java.version");
+                    chkVer.println(version);
+                    chkVer.close();
+ */               } catch (IOException ex) {
                     ex.printStackTrace();
                 }
             }
@@ -243,7 +249,7 @@ private void menuSaveAllPicturesActionPerformed(java.awt.event.ActionEvent evt) 
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File saveFile = fileSelector.getSelectedFile();
             try {
-                ImageIO.write(currentImage, "jpeg", saveFile);
+                ImageIO.write(currentImage, "jpg", saveFile);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
