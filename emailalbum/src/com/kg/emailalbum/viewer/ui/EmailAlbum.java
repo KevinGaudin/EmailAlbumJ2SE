@@ -67,7 +67,7 @@ public class EmailAlbum extends javax.swing.JFrame {
                 public void mouseReleased(MouseEvent e) {
                     repaint();
                     maybeShowPopup(e);
-                    if(!e.isPopupTrigger() && !popupJustHidden) {
+                    if (!e.isPopupTrigger() && !popupJustHidden) {
                         next();
                     } else {
                         popupJustHidden = false;
@@ -86,7 +86,7 @@ public class EmailAlbum extends javax.swing.JFrame {
                     }
                 }
             });
-            
+
             initComponents();
 
             Properties pics = new Properties();
@@ -219,19 +219,20 @@ private void menuSaveAllPicturesActionPerformed(java.awt.event.ActionEvent evt) 
             File saveDir = fileSelector.getSelectedFile();
             Iterator imagesToSave = pictures.iterator();
             File saveFile = null;
-            BufferedImage thisImage = null;
+            BufferedImage thisImage = null, tmpImage = null;
             String imageName = null;
             while(imagesToSave.hasNext()) {
                 imageName = (String) imagesToSave.next();
                 saveFile = new File(saveDir, imageName);
                 try {
+                    // Copying the ImageIO.read generated image in a RGB image is necessary
+                    // avoid ImageIO.write bad handling of custom colorspaces returned
+                    // by ImageIO.read with jpeg pictures taken with some digital cameras.
                     thisImage = ImageIO.read(getClass().getResourceAsStream("/com/kg/emailalbum/viewer/pictures/" + imageName));
-                    ImageIO.write(thisImage, "jpg", saveFile);
-/*                   PrintWriter chkVer = new PrintWriter(new File(saveDir, "java.version"));
-                    String version = System.getProperty("java.version");
-                    chkVer.println(version);
-                    chkVer.close();
- */               } catch (IOException ex) {
+                    tmpImage = new BufferedImage(thisImage.getWidth(), thisImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+                    tmpImage.getGraphics().drawImage(thisImage, 0, 0, null);
+                    ImageIO.write(tmpImage, "jpg", saveFile);
+               } catch (IOException ex) {
                     ex.printStackTrace();
                 }
             }
