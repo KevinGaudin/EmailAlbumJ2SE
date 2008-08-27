@@ -245,12 +245,15 @@ private void menuSaveAllPicturesActionPerformed(java.awt.event.ActionEvent evt) 
         fileSelector.setMultiSelectionEnabled(false);
         fileSelector.setSelectedFile(new File(currentImageName));
         fileSelector.addChoosableFileFilter(ImageUtil.getJpegFilter());
+        fileSelector.setDialogType(JFileChooser.SAVE_DIALOG);
         
         int returnVal = fileSelector.showSaveDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File saveFile = fileSelector.getSelectedFile();
+            BufferedImage tmpImage = new BufferedImage(currentImage.getWidth(), currentImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+            tmpImage.getGraphics().drawImage(currentImage, 0, 0, null);
             try {
-                ImageIO.write(currentImage, "jpg", saveFile);
+                ImageIO.write(tmpImage, "jpg", saveFile);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
