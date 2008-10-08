@@ -15,12 +15,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.ResourceBundle;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
+import javax.swing.ProgressMonitor;
 
 /**
  *
@@ -43,16 +45,19 @@ public class EmailAlbum {
     private static final String CONTENT_FILE = "com/kg/emailalbum/viewer/pictures/content";
     private JarOutputStream archive = null;
     private StringBuffer contentFile = new StringBuffer();
+    private String archiveName = null;
 
     public EmailAlbum(File[] files) {
-
-        for (int i = 0; i < files.length; i++) {
+        ProgressMonitor monitor = new ProgressMonitor(null, java.util.ResourceBundle.getBundle(this.getClass().getName()).getString("monitor.title"), java.util.ResourceBundle.getBundle(this.getClass().getName()).getString("monitor.firstNote"), 0, files.length - 1);
+        for (int i = 0; i < files.length && !monitor.isCanceled(); i++) {
+            monitor.setProgress(i);
             File file = files[i];
 
 
             if (file.exists() && file.isFile()) {
                 FileImage picture = new FileImage();
                 picture.setFileName(file.getName());
+                monitor.setNote(file.getName());
                 try {
                     BufferedImage pic = ImageIO.read(file);
                     if (pic != null) {
@@ -69,14 +74,28 @@ public class EmailAlbum {
                 }
             }
         }
-        if (archive != null) {
+        if (!monitor.isCanceled()) {
+            if (archive != null) {
+                try {
+                    monitor.setNote(java.util.ResourceBundle.getBundle(this.getClass().getName()).getString("monitor.lastNote"));
+                    writeContentFile();
+                    archive.close();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+        } else {
             try {
-                writeContentFile();
+                // Operation cancelled by user
                 archive.close();
+                File archiveFile = new File(archiveName);
+                archiveFile.delete();
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
+
         }
+        monitor.close();
     }
 
     protected void finalize() throws Throwable {
@@ -97,9 +116,25 @@ public class EmailAlbum {
             Calendar today = Calendar.getInstance();
             SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HHmm");
             Manifest manifest = new Manifest();
-            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.1");
             manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, com.kg.emailalbum.viewer.ui.EmailAlbum.class.getName());
-            archive = new JarOutputStream(new FileOutputStream("./" + df.format(today.getTime()) + "-album.jar"), manifest);
+
+            JFileChooser fileSelector = null;
+            fileSelector = new JFileChooser();
+            
+            int usrInput = fileSelector.showSaveDialog(null);
+
+            if(usrInput == JFileChooser.APPROVE_OPTION) {
+                archiveName = fileSelector.getSelectedFile().getAbsolutePath();
+                if(!archiveName.endsWith(".jar")) {
+                    archiveName += ".jar";
+                }
+            } else {
+                // User cancelled operation
+                System.exit(0);
+            }
+
+            archive = new JarOutputStream(new FileOutputStream(archiveName), manifest);
             for (int i = 0; i < VIEWER_FILES.length; i++) {
                 ZipEntry entry = new ZipEntry(VIEWER_FILES[i]);
                 archive.putNextEntry(entry);
@@ -130,9 +165,9 @@ public class EmailAlbum {
         }
         fileSelector.setMultiSelectionEnabled(true);
         fileSelector.addChoosableFileFilter(ImageUtil.getJpegFilter());
-        
+
         fileSelector.setAccessory(new ImagePreview(fileSelector));
-        
+
         int returnVal = fileSelector.showOpenDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             new EmailAlbum(fileSelector.getSelectedFiles());
