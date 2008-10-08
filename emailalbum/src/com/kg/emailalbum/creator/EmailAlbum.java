@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.ResourceBundle;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -39,6 +38,8 @@ public class EmailAlbum {
         "com/kg/emailalbum/viewer/ui/EmailAlbum$4.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$5.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$6.class",
+        "com/kg/emailalbum/viewer/ui/EmailAlbum.properties",
+        "com/kg/emailalbum/viewer/ui/EmailAlbum_en.properties",
         "com/kg/util/ImageUtil.class",
         "com/kg/util/ImageUtil$1.class"
     };
@@ -96,6 +97,7 @@ public class EmailAlbum {
 
         }
         monitor.close();
+        System.exit(0);
     }
 
     protected void finalize() throws Throwable {

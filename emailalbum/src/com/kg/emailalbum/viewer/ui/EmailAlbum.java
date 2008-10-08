@@ -18,6 +18,7 @@ import java.io.IOException;
 //import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.ResourceBundle;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.imageio.ImageIO;
@@ -35,6 +36,7 @@ public class EmailAlbum extends javax.swing.JFrame {
     BufferedImage currentImage = null, resizedImage = null, tmpBuf = null;
     String currentImageName = "";
     boolean popupJustHidden = false;
+    ResourceBundle bundle = ResourceBundle.getBundle(this.getClass().getName());
 
     /** Creates new form EmailAlbum */
     public EmailAlbum() {
@@ -158,7 +160,7 @@ public class EmailAlbum extends javax.swing.JFrame {
         });
 
         menuSavePicture.setBackground(java.awt.SystemColor.control);
-        menuSavePicture.setText("Enregistrer cette image");
+        menuSavePicture.setText(bundle.getString("option.save")); // NOI18N
         menuSavePicture.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 menuSavePictureActionPerformed(evt);
@@ -166,7 +168,7 @@ public class EmailAlbum extends javax.swing.JFrame {
         });
         rightBtnMenu.add(menuSavePicture);
 
-        menuSaveAllPictures.setText("Enregistrer toutes les images");
+        menuSaveAllPictures.setText(bundle.getString("option.saveAll")); // NOI18N
         menuSaveAllPictures.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 menuSaveAllPicturesActionPerformed(evt);

@@ -22,7 +22,9 @@
             <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
               <Color blue="d8" green="e9" id="Control" palette="2" red="ec" type="palette"/>
             </Property>
-            <Property name="text" type="java.lang.String" value="Enregistrer cette image"/>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/kg/emailalbum/viewer/ui/EmailAlbum.properties" key="option.save" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
+            </Property>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuSavePictureActionPerformed"/>
@@ -30,7 +32,9 @@
         </MenuItem>
         <MenuItem class="javax.swing.JMenuItem" name="menuSaveAllPictures">
           <Properties>
-            <Property name="text" type="java.lang.String" value="Enregistrer toutes les images"/>
+            <Property name="text" type="java.lang.String" editor="org.netbeans.modules.i18n.form.FormI18nStringEditor">
+              <ResourceString bundle="com/kg/emailalbum/viewer/ui/EmailAlbum.properties" key="option.saveAll" replaceFormat="bundle.getString(&quot;{key}&quot;)"/>
+            </Property>
           </Properties>
           <Events>
             <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="menuSaveAllPicturesActionPerformed"/>
