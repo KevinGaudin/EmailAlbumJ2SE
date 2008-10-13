@@ -38,6 +38,8 @@ public class EmailAlbum {
         "com/kg/emailalbum/viewer/ui/EmailAlbum$4.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$5.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$6.class",
+        "com/kg/emailalbum/viewer/ui/EmailAlbum$7.class",
+        "com/kg/emailalbum/viewer/ui/EmailAlbum$8.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum.properties",
         "com/kg/emailalbum/viewer/ui/EmailAlbum_en.properties",
         "com/kg/util/ImageUtil.class",

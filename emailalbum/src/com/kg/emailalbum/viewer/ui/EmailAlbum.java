@@ -16,14 +16,18 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 //import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.SortedSet;
+import java.util.Stack;
 import java.util.TreeSet;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -32,9 +36,10 @@ import javax.swing.JFrame;
 public class EmailAlbum extends javax.swing.JFrame {
 
     SortedSet pictures = new TreeSet();
-    Iterator iPics = null;
+    //Iterator iPics = null;
+    Stack history = null, followers = null;
     BufferedImage currentImage = null, resizedImage = null, tmpBuf = null;
-    String currentImageName = "";
+    String currentImageName = null;
     boolean popupJustHidden = false;
     ResourceBundle bundle = ResourceBundle.getBundle(this.getClass().getName());
 
@@ -45,15 +50,23 @@ public class EmailAlbum extends javax.swing.JFrame {
             setVisible(true);
             setExtendedState(MAXIMIZED_BOTH);
             addKeyListener(new KeyListener() {
-
                 public void keyTyped(KeyEvent e) {
-                    next();
                 }
 
                 public void keyPressed(KeyEvent e) {
                 }
 
                 public void keyReleased(KeyEvent e) {
+                    switch (e.getKeyCode()) {
+                        case KeyEvent.VK_BACK_SPACE:
+                        case KeyEvent.VK_LEFT:
+                        case KeyEvent.VK_UP:
+                        case KeyEvent.VK_PAGE_UP:
+                            back();
+                            break;
+                        default:
+                            next();
+                    }
                 }
             });
             addMouseListener(new MouseListener() {
@@ -102,15 +115,35 @@ public class EmailAlbum extends javax.swing.JFrame {
     }
 
     public void start() {
-        iPics = pictures.iterator();
-        display((String) iPics.next());
+        Iterator iPics = pictures.iterator();
+        history = new Stack();
+        followers = new Stack();
+        followers.addAll(pictures);
+        Collections.sort(followers, new Comparator() {
+            public int compare(Object o1, Object o2) {
+                return -((String) o1).compareTo(o2);
+            }
+        });
+        next();
     }
 
     private void next() {
-        if (iPics.hasNext()) {
-            display((String) iPics.next());
+        if (!followers.isEmpty()) {
+            if (currentImageName != null) {
+                history.push(currentImageName);
+            }
+            display((String) followers.pop());
         } else {
             System.exit(0);
+        }
+    }
+
+    private void back() {
+        System.out.println("back key hit !");
+        if (!history.isEmpty()) {
+            System.out.println("performing back action");
+            followers.push(currentImageName);
+            display((String) history.pop());
         }
     }
 
@@ -146,6 +179,8 @@ public class EmailAlbum extends javax.swing.JFrame {
         rightBtnMenu = new javax.swing.JPopupMenu();
         menuSavePicture = new javax.swing.JMenuItem();
         menuSaveAllPictures = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JSeparator();
+        menuAbout = new javax.swing.JMenuItem();
 
         rightBtnMenu.setBackground(java.awt.SystemColor.control);
         rightBtnMenu.setLightWeightPopupEnabled(false);
@@ -168,6 +203,7 @@ public class EmailAlbum extends javax.swing.JFrame {
         });
         rightBtnMenu.add(menuSavePicture);
 
+        menuSaveAllPictures.setBackground(java.awt.SystemColor.control);
         menuSaveAllPictures.setText(bundle.getString("option.saveAll")); // NOI18N
         menuSaveAllPictures.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -175,6 +211,18 @@ public class EmailAlbum extends javax.swing.JFrame {
             }
         });
         rightBtnMenu.add(menuSaveAllPictures);
+
+        jSeparator1.setBackground(java.awt.SystemColor.control);
+        rightBtnMenu.add(jSeparator1);
+
+        menuAbout.setBackground(java.awt.SystemColor.control);
+        menuAbout.setText(bundle.getString("option.about")); // NOI18N
+        menuAbout.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                menuAboutActionPerformed(evt);
+            }
+        });
+        rightBtnMenu.add(menuAbout);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         getContentPane().setLayout(null);
@@ -194,6 +242,10 @@ private void menuSaveAllPicturesActionPerformed(java.awt.event.ActionEvent evt) 
     saveAllImages();
 }//GEN-LAST:event_menuSaveAllPicturesActionPerformed
 
+private void menuAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuAboutActionPerformed
+    JOptionPane.showMessageDialog(this, bundle.getString("about.message"), bundle.getString("about.title"), JOptionPane.PLAIN_MESSAGE);
+}//GEN-LAST:event_menuAboutActionPerformed
+
     /**
     * @param args the command line arguments
     */
@@ -206,6 +258,8 @@ private void menuSaveAllPicturesActionPerformed(java.awt.event.ActionEvent evt) 
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JSeparator jSeparator1;
+    private javax.swing.JMenuItem menuAbout;
     private javax.swing.JMenuItem menuSaveAllPictures;
     private javax.swing.JMenuItem menuSavePicture;
     private javax.swing.JPopupMenu rightBtnMenu;
