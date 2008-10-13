@@ -28,6 +28,7 @@ import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.ProgressMonitor;
 
 /**
  *
@@ -50,6 +51,7 @@ public class EmailAlbum extends javax.swing.JFrame {
             setVisible(true);
             setExtendedState(MAXIMIZED_BOTH);
             addKeyListener(new KeyListener() {
+
                 public void keyTyped(KeyEvent e) {
                 }
 
@@ -120,6 +122,7 @@ public class EmailAlbum extends javax.swing.JFrame {
         followers = new Stack();
         followers.addAll(pictures);
         Collections.sort(followers, new Comparator() {
+
             public int compare(Object o1, Object o2) {
                 return -((String) o1).compareTo(o2);
             }
@@ -139,9 +142,7 @@ public class EmailAlbum extends javax.swing.JFrame {
     }
 
     private void back() {
-        System.out.println("back key hit !");
         if (!history.isEmpty()) {
-            System.out.println("performing back action");
             followers.push(currentImageName);
             display((String) history.pop());
         }
@@ -272,14 +273,18 @@ private void menuAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
         
         int returnVal = fileSelector.showSaveDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
+            ProgressMonitor  monitor = new ProgressMonitor(null, bundle.getString("monitor.title"), bundle.getString("monitor.firstNote"), 0, pictures.size() - 1);
             File saveDir = fileSelector.getSelectedFile();
             Iterator imagesToSave = pictures.iterator();
             File saveFile = null;
             BufferedImage thisImage = null, tmpImage = null;
             String imageName = null;
-            while(imagesToSave.hasNext()) {
+            int i = 0;
+            while(imagesToSave.hasNext() && !monitor.isCanceled()) {
                 imageName = (String) imagesToSave.next();
                 saveFile = new File(saveDir, imageName);
+                monitor.setNote(imageName);
+                monitor.setProgress(i++);
                 try {
                     // Copying the ImageIO.read generated image in a RGB image is necessary
                     // avoid ImageIO.write bad handling of custom colorspaces returned
@@ -292,6 +297,7 @@ private void menuAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
                     ex.printStackTrace();
                 }
             }
+            monitor.close();
         }
     }
     // End of variables declaration
