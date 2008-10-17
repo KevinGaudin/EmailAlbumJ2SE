@@ -29,7 +29,8 @@ import javax.swing.ProgressMonitor;
  */
 public class EmailAlbum {
 
-    private static final Dimension IMAGE_SIZE = new Dimension(1024, 768);
+    private static final Dimension IMAGE_SIZE_LANDSCAPE = new Dimension(1024, 768);
+    private static final Dimension IMAGE_SIZE_PORTRAIT = new Dimension(768, 1024);
     private static final String PICTURES_ARCHIVE_PATH = "com/kg/emailalbum/viewer/pictures/";
     private static final String[] VIEWER_FILES = {"com/kg/emailalbum/viewer/ui/EmailAlbum.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$1.class",
@@ -64,8 +65,9 @@ public class EmailAlbum {
                 try {
                     BufferedImage pic = ImageIO.read(file);
                     if (pic != null) {
-                        if (pic.getWidth() > IMAGE_SIZE.getWidth() || pic.getHeight() > IMAGE_SIZE.getHeight()) {
-                            pic = ImageUtil.resize(pic, IMAGE_SIZE);
+                        Dimension bounds = pic.getHeight() > pic.getWidth() ? IMAGE_SIZE_PORTRAIT : IMAGE_SIZE_LANDSCAPE;
+                        if (pic.getWidth() > bounds.getWidth() || pic.getHeight() > bounds.getHeight()) {
+                            pic = ImageUtil.resize(pic, bounds);
                         }
 
                         picture.setImage(pic);
