@@ -42,7 +42,7 @@ public class EmailAlbum {
         "com/kg/emailalbum/viewer/ui/EmailAlbum$7.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$8.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum.properties",
-        "com/kg/emailalbum/viewer/ui/EmailAlbum_en.properties",
+        "com/kg/emailalbum/viewer/ui/EmailAlbum_fr.properties",
         "com/kg/util/ImageUtil.class",
         "com/kg/util/ImageUtil$1.class"
     };
