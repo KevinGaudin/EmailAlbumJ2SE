@@ -10,7 +10,6 @@ import java.awt.event.MouseListener;
 import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import javax.imageio.ImageIO;
@@ -79,9 +78,10 @@ public class ImagePreview extends JComponent
         nbrows = (int) Math.ceil((float)files.length / (float)nbcols);
         int iconWidth = getWidth() / nbcols - 2;
         int iconHeight = getHeight() / nbrows - 2;
+        BufferedImage tmpIcon = null;
         for (int i = 0; i < files.length; i++) {
             try {
-                BufferedImage tmpIcon = loadImage(files[i]);
+                tmpIcon = loadImage(files[i]);
                 if (tmpIcon.getWidth() > iconWidth || tmpIcon.getHeight() > iconHeight) {
                     thumbnails[i] = new ImageIcon(ImageUtil.resize(tmpIcon, new Dimension(iconWidth, iconHeight)), files[i].getName());
                 } else {
@@ -113,7 +113,6 @@ public class ImagePreview extends JComponent
             loadImages();
         }
         if (thumbnails != null) {
-            int thmnumber = thumbnails.length;
             for (int i = 0; i< thumbnails.length; i++) {
                 if(thumbnails[i] != null) {
                     int colWidth = (getWidth() / nbcols);
