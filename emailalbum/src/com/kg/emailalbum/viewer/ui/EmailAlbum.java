@@ -13,9 +13,13 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 //import java.io.PrintWriter;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -277,7 +281,8 @@ private void menuAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
             File saveDir = fileSelector.getSelectedFile();
             Iterator imagesToSave = pictures.iterator();
             File saveFile = null;
-            BufferedImage thisImage = null, tmpImage = null;
+            InputStream imageInput = null;
+            OutputStream imageOutput = null;
             String imageName = null;
             int i = 0;
             while(imagesToSave.hasNext() && !monitor.isCanceled()) {
@@ -286,13 +291,13 @@ private void menuAboutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIR
                 monitor.setNote(imageName);
                 monitor.setProgress(i++);
                 try {
-                    // Copying the ImageIO.read generated image in a RGB image is necessary
-                    // avoid ImageIO.write bad handling of custom colorspaces returned
-                    // by ImageIO.read with jpeg pictures taken with some digital cameras.
-                    thisImage = ImageIO.read(getClass().getResourceAsStream("/com/kg/emailalbum/viewer/pictures/" + imageName));
-                    tmpImage = new BufferedImage(thisImage.getWidth(), thisImage.getHeight(), BufferedImage.TYPE_INT_RGB);
-                    tmpImage.getGraphics().drawImage(thisImage, 0, 0, null);
-                    ImageIO.write(tmpImage, "jpg", saveFile);
+                    imageInput = getClass().getResourceAsStream("/com/kg/emailalbum/viewer/pictures/" + imageName);
+                    imageOutput = new FileOutputStream(saveFile);
+                    while(imageInput.available() > 0) {
+                        imageOutput.write(imageInput.read());
+                    }
+                    imageInput.close();
+                    imageOutput.close();
                } catch (IOException ex) {
                     ex.printStackTrace();
                 }
