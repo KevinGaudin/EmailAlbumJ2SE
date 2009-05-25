@@ -74,6 +74,7 @@ public class EmailAlbum {
                         addToArchive(picture);
                         contentFile.append(picture.getFileName()).append("\n");
                     }
+                    
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
@@ -113,7 +114,10 @@ public class EmailAlbum {
 
     private void addToArchive(FileImage picture) throws IOException {
         getArchive().putNextEntry(new ZipEntry(PICTURES_ARCHIVE_PATH + picture.getFileName()));
-        ImageIO.write(picture.getImage(), "jpeg", getArchive());
+        BufferedImage currentImage = picture.getImage();
+        BufferedImage tmpImage = new BufferedImage(currentImage.getWidth(), currentImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+        tmpImage.getGraphics().drawImage(currentImage, 0, 0, null);
+        ImageIO.write(tmpImage, "jpeg", getArchive());
         getArchive().closeEntry();
     }
 
