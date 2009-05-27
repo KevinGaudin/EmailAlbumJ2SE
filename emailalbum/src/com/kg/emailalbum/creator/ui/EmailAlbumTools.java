@@ -49,6 +49,7 @@ public class EmailAlbumTools extends javax.swing.JPanel {
         spnTargetWidth = new javax.swing.JSpinner();
         jLabel2 = new javax.swing.JLabel();
         spnTargetHeight = new javax.swing.JSpinner();
+        jSeparator1 = new javax.swing.JToolBar.Separator();
         jButton1 = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton3 = new javax.swing.JButton();
@@ -73,8 +74,10 @@ public class EmailAlbumTools extends javax.swing.JPanel {
         spnTargetHeight.setModel(new SpinnerNumberModel(new Integer(EmailAlbum.DEFAULT_HEIGHT),new Integer(0),null, new Integer(1)));
         spnTargetHeight.setValue(new Integer(EmailAlbum.DEFAULT_HEIGHT));
         jToolBar1.add(spnTargetHeight);
+        jToolBar1.add(jSeparator1);
 
-        jButton1.setText("lo");
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/lo.gif"))); // NOI18N
+        jButton1.setToolTipText("800 x 600");
         jButton1.setFocusable(false);
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -85,7 +88,8 @@ public class EmailAlbumTools extends javax.swing.JPanel {
         });
         jToolBar1.add(jButton1);
 
-        jButton2.setText("mid");
+        jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/med.gif"))); // NOI18N
+        jButton2.setToolTipText("1024 x 768");
         jButton2.setFocusable(false);
         jButton2.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton2.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -96,7 +100,8 @@ public class EmailAlbumTools extends javax.swing.JPanel {
         });
         jToolBar1.add(jButton2);
 
-        jButton3.setText("hi");
+        jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/hi.gif"))); // NOI18N
+        jButton3.setToolTipText("1280 x 1024");
         jButton3.setFocusable(false);
         jButton3.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         jButton3.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
@@ -132,6 +137,7 @@ private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRS
     private javax.swing.JButton jButton3;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar jToolBar1;
     private javax.swing.JSpinner spnTargetHeight;
     private javax.swing.JSpinner spnTargetWidth;
