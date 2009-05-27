@@ -5,7 +5,7 @@
 package com.kg.emailalbum.creator;
 
 import com.kg.emailalbum.common.FileImage;
-import com.kg.emailalbum.creator.ui.ImagePreview;
+import com.kg.emailalbum.creator.ui.EmailAlbumTools;
 import com.kg.util.ImageUtil;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -28,9 +28,8 @@ import javax.swing.ProgressMonitor;
  * @author gaudin
  */
 public class EmailAlbum {
-
-    private static final Dimension IMAGE_SIZE_LANDSCAPE = new Dimension(1024, 768);
-    private static final Dimension IMAGE_SIZE_PORTRAIT = new Dimension(768, 1024);
+    public static final int DEFAULT_WIDTH = 1024;
+    public static final int DEFAULT_HEIGHT = 768;
     private static final String PICTURES_ARCHIVE_PATH = "com/kg/emailalbum/viewer/pictures/";
     private static final String[] VIEWER_FILES = {"com/kg/emailalbum/viewer/ui/EmailAlbum.class",
         "com/kg/emailalbum/viewer/ui/EmailAlbum$1.class",
@@ -50,8 +49,31 @@ public class EmailAlbum {
     private JarOutputStream archive = null;
     private StringBuffer contentFile = new StringBuffer();
     private String archiveName = null;
+    private int targetWidth = DEFAULT_WIDTH, targetHeight = DEFAULT_HEIGHT;
 
-    public EmailAlbum(File[] files) {
+    public void setTargetHeight(int targetHeight) {
+        this.targetHeight = targetHeight;
+    }
+
+    public void setTargetWidth(int targetWidth) {
+        this.targetWidth = targetWidth;
+    }
+    
+    public Dimension getLandscapeBounds() {
+        return new Dimension(targetWidth, targetHeight);
+    }
+            
+    public Dimension getPortraitBounds() {
+        return new Dimension(getLandscapeBounds().height, getLandscapeBounds().width);
+    }
+
+    public EmailAlbum(File[] files, int userWidth, int userHeight) {
+        
+        if(userWidth > 0 && userHeight > 0) {
+            setTargetWidth(userWidth);
+            setTargetHeight(userHeight);
+        }
+        
         ProgressMonitor monitor = new ProgressMonitor(null, java.util.ResourceBundle.getBundle(this.getClass().getName()).getString("monitor.title"), java.util.ResourceBundle.getBundle(this.getClass().getName()).getString("monitor.firstNote"), 0, files.length - 1);
         for (int i = 0; i < files.length && !monitor.isCanceled(); i++) {
             monitor.setProgress(i);
@@ -65,7 +87,7 @@ public class EmailAlbum {
                 try {
                     BufferedImage pic = ImageIO.read(file);
                     if (pic != null) {
-                        Dimension bounds = pic.getHeight() > pic.getWidth() ? IMAGE_SIZE_PORTRAIT : IMAGE_SIZE_LANDSCAPE;
+                        Dimension bounds = pic.getHeight() > pic.getWidth() ? getPortraitBounds() : getLandscapeBounds();
                         if (pic.getWidth() > bounds.getWidth() || pic.getHeight() > bounds.getHeight()) {
                             pic = ImageUtil.resize(pic, bounds);
                         }
@@ -175,13 +197,16 @@ public class EmailAlbum {
         }
         fileSelector.setMultiSelectionEnabled(true);
         fileSelector.addChoosableFileFilter(ImageUtil.getJpegFilter());
-
-        fileSelector.setAccessory(new ImagePreview(fileSelector));
+        EmailAlbumTools tools = new EmailAlbumTools(fileSelector);
+        fileSelector.setAccessory(tools);
 
         int returnVal = fileSelector.showOpenDialog(null);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
-            new EmailAlbum(fileSelector.getSelectedFiles());
+            new EmailAlbum(fileSelector.getSelectedFiles(), tools.getTargetWidth(), tools.getTargetHeight());
+        } else {
+            System.exit(0);
         }
+        
     }
 
     private void writeContentFile() throws IOException {
