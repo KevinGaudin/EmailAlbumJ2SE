@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string name="hello">Hello World!</string>
+    <string name="app_name">EmailAlbumViewer</string>
+<string name="no_file">No file selected</string>
+<string name="open_archive_error">An error occured while opening file : </string>
+<string name="first_pic">This is the first picture</string>
+<string name="last_pic">This is the last picture</string>
+<string name="title_prog_retrieve_archive">Processing...</string>
+<string name="msg_prog_retrieve_archive">Please wait while retrieving your album...</string>
+</resources>
