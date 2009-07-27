@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    
+    <string name="app_name">EmailAlbum Viewer</string>
+<string name="no_file">Aucun album sélectionné.</string>
+<string name="open_archive_error">Une erreur est survenue à l'ouverture du fichier :</string>
+<string name="first_pic">Ceci est la première image.</string>
+<string name="last_pic">Ceci est la dernière image.</string>
+<string name="title_prog_retrieve_archive">En cours...</string>
+<string name="msg_prog_retrieve_archive">Veuillez patienter pendant la récupération de votre album.</string>
+</resources>
