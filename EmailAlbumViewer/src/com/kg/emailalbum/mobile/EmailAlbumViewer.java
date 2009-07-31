@@ -25,6 +25,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -34,6 +35,7 @@ import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -41,8 +43,11 @@ import android.os.Message;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class EmailAlbumViewer extends ListActivity {
@@ -53,6 +58,15 @@ public class EmailAlbumViewer extends ListActivity {
 	private ZipFile mArchive = null;
 	private ProgressDialog mProgress;
 	private Context context;
+	PhotoAdapter mAdapter;
+
+	private static final String KEY_FULLNAME = "imageName";
+	private static final String KEY_THUMBNAIL = "thumbnail";
+	private static final String KEY_SHORTNAME = "imageShortName";
+	
+	protected static final String KEY_THMBCREAT_ENTRY_POSITION = "entryPosition";
+	protected static final String KEY_THMBCREAT_THUMB_NAME = "thumbName";
+	
 	
 	private class ArchiveRetriever implements Runnable {
 
@@ -73,7 +87,7 @@ public class EmailAlbumViewer extends ListActivity {
 				mAlbumFileUri = Uri.parse(tempArchive.toURI().toString());
 				tempOS.close();
 				intentInputStream.close();
-				handler.sendEmptyMessage(0);
+				archiveCopyHandler.sendEmptyMessage(0);
 
 			} catch (IOException e) {
 				Message msg = new Message();
@@ -81,13 +95,13 @@ public class EmailAlbumViewer extends ListActivity {
 				msg.arg1 = -1;
 				data.putString("EXCEPTION", e.getLocalizedMessage());
 				msg.setData(data );
-				handler.sendMessage(msg);
+				archiveCopyHandler.sendMessage(msg);
 			}
 		}
 		
 	}
 
-	private Handler handler = new Handler() {
+	private Handler archiveCopyHandler = new Handler() {
 
 		/* (non-Javadoc)
 		 * @see android.os.Handler#handleMessage(android.os.Message)
@@ -99,7 +113,25 @@ public class EmailAlbumViewer extends ListActivity {
 			if(msg.arg1 < 0) {
 				Toast.makeText(context, msg.getData().getShort("EXCEPTION"), Toast.LENGTH_SHORT).show();
 			} 
-			fillData();
+			fillData(true);
+		}
+		
+	};
+	
+	private Handler thumbnailsCreationHandler = new Handler(){
+		/* (non-Javadoc)
+		 * @see android.os.Handler#handleMessage(android.os.Message)
+		 */
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			if(msg.arg1 < 0) {
+				Toast.makeText(context, msg.getData().getString("EXCEPTION"), Toast.LENGTH_SHORT).show();
+			} else {
+				int position = msg.getData().getInt(KEY_THMBCREAT_ENTRY_POSITION);
+				String thumbName = msg.getData().getString(KEY_THMBCREAT_THUMB_NAME);
+				mAdapter.updateThumbnail(position, thumbName);
+			}
 		}
 		
 	};
@@ -120,6 +152,7 @@ public class EmailAlbumViewer extends ListActivity {
 			if (savedInstanceState.getString("albumFileUri") != null) {
 				mAlbumFileUri = Uri.parse(savedInstanceState
 						.getString("albumFileUri"));
+				fillData(false);
 			}
 		} else if (getIntent() != null
 				&& Intent.ACTION_VIEW.equals(getIntent().getAction())) {
@@ -136,19 +169,31 @@ public class EmailAlbumViewer extends ListActivity {
 			Intent intent = new Intent("org.openintents.action.PICK_FILE");
 			intent.setData(Uri.parse("file:///sdcard"));
 			intent.putExtra("org.openintents.extra.TITLE",
-					"Please select an album...");
+					getText(R.string.select_file));
 			intent.putExtra("org.openintents.extra.BUTTON_TEXT",
-					"There it is !");
+					getText(R.string.btn_select_file));
 
 			startActivityForResult(intent, ACTIVITY_PICK_FILE);
 
 			setContentView(R.layout.content_list);
-			fillData();
 		}
 
 	}
 
-	private void fillData() {
+
+	private void startThumbnailsCreation(boolean clearThumbnails) {
+		ArrayList<String> pictureNames = new ArrayList<String>();
+		Iterator<Map<String, String>> i = mContentModel.iterator();
+		while (i.hasNext()) {
+			Map<String, String> entry = (Map<String, String>) i.next();
+			pictureNames.add(entry.get(KEY_FULLNAME));
+		}
+		Thread thmbCreator = new Thread(new ThumbnailsCreator(this, mArchive, pictureNames, thumbnailsCreationHandler, clearThumbnails));
+		thmbCreator.start();
+	}
+
+
+	private void fillData(boolean clearThumbnails) {
 		if (mAlbumFileUri != null) {
 			try {
 				File selectedFile = new File(new URI(mAlbumFileUri.toString()
@@ -168,7 +213,7 @@ public class EmailAlbumViewer extends ListActivity {
 					// Now create an array adapter and set it to display using
 					// our row
 					mContentModel = new ArrayList<Map<String, String>>();
-					setTitle(mAlbumFileUri.getLastPathSegment() + " content");
+					setTitle(mAlbumFileUri.getLastPathSegment());
 					ZipEntry entry = null;
 					Enumeration<? extends ZipEntry> entries = mArchive.entries();
 					while (entries.hasMoreElements()) {
@@ -180,30 +225,21 @@ public class EmailAlbumViewer extends ListActivity {
 								|| entry.getName().endsWith(".png")
 								|| entry.getName().endsWith(".PNG")) {
 							Map<String, String> contentLine = new HashMap<String, String>();
-							contentLine.put("imageName", entry.getName());
-							contentLine.put("imageShortName", entry.getName().substring(entry.getName().lastIndexOf('/') + 1));
+							contentLine.put(KEY_FULLNAME, entry.getName());
+							contentLine.put(KEY_SHORTNAME, entry.getName().substring(entry.getName().lastIndexOf('/') + 1));
 							mContentModel.add(contentLine);
 						}
-
-						// Create an array to specify the fields we want to
-
 					}
-					// display in the
-					// list (only TITLE)
-					String[] from = new String[] { "imageShortName" };
-					// and an array of the fields we want to bind those fields
-					// to (in
-					// this case just text1)
-					int[] to = new int[] { R.id.text1 };
-
-					SimpleAdapter content = new SimpleAdapter(this,
-							mContentModel, R.layout.content_row, from, to);
-					setListAdapter(content);
+			        mAdapter = new PhotoAdapter();
+			        setListAdapter(mAdapter);
 				} catch (Exception e) {
 					Toast.makeText(this, e.getLocalizedMessage(),
 							Toast.LENGTH_SHORT).show();
 				}
 			}
+		}
+		if(mContentModel != null) {
+			startThumbnailsCreation(clearThumbnails);
 		}
 	}
 
@@ -241,7 +277,7 @@ public class EmailAlbumViewer extends ListActivity {
 				if (filename != null) {
 					mAlbumFileUri = Uri.parse(filename);
 				}
-				fillData();
+				fillData(true);
 			}
 			break;
 		}
@@ -268,7 +304,7 @@ public class EmailAlbumViewer extends ListActivity {
 
 		ArrayList<String> imageNames = new ArrayList<String>();
 		for (Map<String, String> contentItem : mContentModel) {
-			imageNames.add(contentItem.get("imageName"));
+			imageNames.add(contentItem.get(KEY_FULLNAME));
 		}
 
 		i.putExtra("PICS", imageNames);
@@ -276,5 +312,45 @@ public class EmailAlbumViewer extends ListActivity {
 		i.putExtra("POSITION", position);
 		startActivity(i);
 	}
+	
+    public class PhotoAdapter extends BaseAdapter {
+ 
 
+        public int getCount() {
+            return mContentModel.size();
+        }
+
+        public Object getItem(int position) {
+            return mContentModel.get(position);
+        }
+
+        public long getItemId(int position) {
+            return position;
+        }
+
+        public View getView(int position, View convertView, ViewGroup parent) {
+            // Make an ImageView to show a thumbnail
+        	View result;
+//        	if(convertView == null || convertView.findViewById(R.id.thumbnail) == null) {
+        		result = getLayoutInflater().inflate(R.layout.content_row, null, false);
+//        	} else {
+//        		result = convertView;
+//        	}
+            ImageView i = (ImageView)result.findViewById(R.id.thumbnail);
+            String thumbName = mContentModel.get(position).get(KEY_THUMBNAIL);
+            if(thumbName != null) {
+            	i.setImageDrawable(new BitmapDrawable(thumbName));
+            }
+
+            TextView t = (TextView)result.findViewById(R.id.image_name);
+            t.setText(mContentModel.get(position).get(KEY_SHORTNAME));
+            return result;
+        }
+
+    	public void updateThumbnail(int position, String thumbName) {
+    		mContentModel.get(position).put(KEY_THUMBNAIL, thumbName);
+            notifyDataSetChanged();
+    	}
+
+    }
 }

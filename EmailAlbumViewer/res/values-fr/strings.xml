@@ -9,4 +9,6 @@
 <string name="last_pic">Ceci est la dernière image.</string>
 <string name="title_prog_retrieve_archive">En cours...</string>
 <string name="msg_prog_retrieve_archive">Veuillez patienter pendant la récupération de votre album.</string>
+<string name="select_file">Choisissez votre album...</string>
+<string name="btn_select_file">Celui-ci !</string>
 </resources>
