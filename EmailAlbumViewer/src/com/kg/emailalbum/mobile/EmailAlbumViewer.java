@@ -163,6 +163,9 @@ public class EmailAlbumViewer extends ListActivity {
 				
 				mProgress = ProgressDialog.show(this, getText(R.string.title_prog_retrieve_archive), getText(R.string.msg_prog_retrieve_archive), true, false);
 				new Thread(new ArchiveRetriever()).start();
+
+			} else {
+				fillData(true);
 			}
 		} 
 
