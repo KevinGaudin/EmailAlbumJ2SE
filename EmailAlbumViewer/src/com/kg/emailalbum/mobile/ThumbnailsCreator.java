@@ -18,13 +18,14 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 
-public class ThumbnailsCreator implements Runnable {
+public class ThumbnailsCreator extends Thread {
 	private ArrayList<String> mPictures;
 	private HashMap<String, String> mThumbnails = new HashMap<String, String>();
 	private Handler mHandler;
 	private ZipFile mArchive;
 	private Context mContext;
 	private boolean mClearThumbnails;
+	private boolean mContinueCreation = true;
 
 	public ThumbnailsCreator(Context c, ZipFile archive,
 			ArrayList<String> pictures, Handler handler, boolean clearThumbnails) {
@@ -49,7 +50,7 @@ public class ThumbnailsCreator implements Runnable {
 				Iterator<String> iPictures = mPictures.iterator();
 				int pos = 0;
 				List<String> files = Arrays.asList(mContext.fileList());
-				while (iPictures.hasNext()) {
+				while (mContinueCreation && iPictures.hasNext()) {
 					entryName = iPictures.next();
 					entry = mArchive.getEntry(entryName);
 					String thumbName = entryName.substring(entryName
@@ -109,6 +110,10 @@ public class ThumbnailsCreator implements Runnable {
 		data.putString("EXCEPTION", e.getLocalizedMessage());
 		msg.setData(data);
 		mHandler.sendMessage(msg);
+	}
+	
+	public void stopCreation(){
+		mContinueCreation = false;
 	}
 
 }

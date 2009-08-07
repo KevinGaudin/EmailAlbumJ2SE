@@ -11,4 +11,12 @@
 <string name="msg_prog_retrieve_archive">Please wait while retrieving your album...</string>
 <string name="select_file">Please select an album...</string>
 <string name="btn_select_file">There it is !</string>
+<string name="menu_wallpaper">Set as Wallpaper</string>
+<string name="menu_load_album">View another album</string>
+<string name="menu_share">Share</string>
+<string name="chooser_share">Share with...</string>
+<string name="menu_save">Save this image</string>
+<string name="error_wallpaper">Error while installing wallpaper.</string>
+<string name="error_other_intents">Error while building other intents menu.</string>
+<string name="wallpaper_in_progress">Your wallpaper will be set in a few seconds.</string>
 </resources>

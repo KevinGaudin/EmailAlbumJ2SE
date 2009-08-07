@@ -51,7 +51,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class EmailAlbumViewer extends ListActivity {
-	private static final int INSERT_ID = Menu.FIRST;
+	private static final int LOAD_ALBUM_ID = Menu.FIRST;
 	private static final int ACTIVITY_PICK_FILE = 1;
 	private ArrayList<Map<String, String>> mContentModel;
 	private Uri mAlbumFileUri = null;
@@ -135,6 +135,7 @@ public class EmailAlbumViewer extends ListActivity {
 		}
 		
 	};
+	private ThumbnailsCreator mThmbCreator;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -188,8 +189,8 @@ public class EmailAlbumViewer extends ListActivity {
 			Map<String, String> entry = (Map<String, String>) i.next();
 			pictureNames.add(entry.get(KEY_FULLNAME));
 		}
-		Thread thmbCreator = new Thread(new ThumbnailsCreator(this, mArchive, pictureNames, thumbnailsCreationHandler, clearThumbnails));
-		thmbCreator.start();
+		mThmbCreator = new ThumbnailsCreator(this, mArchive, pictureNames, thumbnailsCreationHandler, clearThumbnails);
+		mThmbCreator.start();
 	}
 
 
@@ -247,14 +248,15 @@ public class EmailAlbumViewer extends ListActivity {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// TODO Auto-generated method stub
 		boolean result = super.onCreateOptionsMenu(menu);
-		return result;
+		menu.add(0, LOAD_ALBUM_ID,0, R.string.menu_load_album);
+        return result;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		// TODO Auto-generated method stub
 		switch (item.getItemId()) {
-		case INSERT_ID:
+		case LOAD_ALBUM_ID:
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -288,6 +290,9 @@ public class EmailAlbumViewer extends ListActivity {
 		super.onSaveInstanceState(outState);
 		if (mAlbumFileUri != null) {
 			outState.putString("albumFileUri", mAlbumFileUri.toString());
+		}
+		if (mThmbCreator != null && mThmbCreator.isAlive()) {
+			mThmbCreator.stopCreation();
 		}
 	}
 

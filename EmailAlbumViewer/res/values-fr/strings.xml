@@ -1,14 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    
-    
-    <string name="app_name">EmailAlbum Viewer</string>
-<string name="no_file">Aucun album sélectionné.</string>
-<string name="open_archive_error">Une erreur est survenue à l'ouverture du fichier :</string>
-<string name="first_pic">Ceci est la première image.</string>
-<string name="last_pic">Ceci est la dernière image.</string>
-<string name="title_prog_retrieve_archive">En cours...</string>
-<string name="msg_prog_retrieve_archive">Veuillez patienter pendant la récupération de votre album.</string>
-<string name="select_file">Choisissez votre album...</string>
-<string name="btn_select_file">Celui-ci !</string>
+
+
+	<string name="app_name">EmailAlbum Viewer</string>
+	<string name="no_file">Aucun album sélectionné.</string>
+	<string name="open_archive_error">Une erreur est survenue à l'ouverture du fichier
+		:</string>
+	<string name="first_pic">Ceci est la première image.</string>
+	<string name="last_pic">Ceci est la dernière image.</string>
+	<string name="title_prog_retrieve_archive">En cours...</string>
+	<string name="msg_prog_retrieve_archive">Veuillez patienter pendant la récupération
+		de votre album.</string>
+	<string name="select_file">Choisissez votre album...</string>
+	<string name="btn_select_file">Celui-ci !</string>
+	<string name="menu_wallpaper">Fond d'écran</string>
+	<string name="menu_load_album">Voir un autre album</string>
+	<string name="error_wallpaper">Erreur lors de la mise en place du fond
+		d'écran.</string>
+	<string name="menu_share">Partager</string>
+	<string name="chooser_share">Partager avec...</string>
+	<string name="menu_save">Enregistrer cette image</string>
+	<string name="error_other_intents">Erreur à la création du menu alternatif
+	</string>
+	<string name="wallpaper_in_progress">Votre fond d'écran sera remplacé d'ici quelques instants.
+	</string>
 </resources>
