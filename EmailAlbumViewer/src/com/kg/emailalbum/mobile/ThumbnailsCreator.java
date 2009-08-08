@@ -19,6 +19,7 @@ import android.os.Handler;
 import android.os.Message;
 
 public class ThumbnailsCreator extends Thread {
+	private static final String THUMBS_PREFIX = "thm_";
 	private ArrayList<String> mPictures;
 	private HashMap<String, String> mThumbnails = new HashMap<String, String>();
 	private Handler mHandler;
@@ -53,7 +54,7 @@ public class ThumbnailsCreator extends Thread {
 				while (mContinueCreation && iPictures.hasNext()) {
 					entryName = iPictures.next();
 					entry = mArchive.getEntry(entryName);
-					String thumbName = entryName.substring(entryName
+					String thumbName = THUMBS_PREFIX + entryName.substring(entryName
 							.lastIndexOf('/') + 1);
 					if(!files.contains(thumbName)) {
 					

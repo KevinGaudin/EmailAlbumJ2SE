@@ -1,6 +1,7 @@
 package com.kg.emailalbum.mobile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,6 +19,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -87,6 +89,34 @@ public class ShowPics extends Activity implements OnGestureListener {
 		}
 	}
 
+	private void goBack() {
+		int oldPosition = mPosition;
+		mPosition = Math.max(0, mPosition - 1);
+		if (oldPosition != mPosition) {
+			showPicture();
+		} else {
+			toastFirstOrLast();
+		}
+	}
+
+	private void goForward() {
+		int oldPosition = mPosition;
+		mPosition = Math.min(mImageNames.size() - 1, mPosition + 1);
+		if (oldPosition != mPosition) {
+			showPicture();
+		} else {
+			toastFirstOrLast();
+		}
+	}
+
+	private void toastFirstOrLast() {
+		if (mPosition == 0) {
+			Toast.makeText(this, R.string.first_pic, Toast.LENGTH_SHORT).show();
+		} else if (mPosition == mImageNames.size() - 1) {
+			Toast.makeText(this, R.string.last_pic, Toast.LENGTH_SHORT).show();
+		}
+	}
+
 	@Override
 	public boolean onTouchEvent(MotionEvent me) {
 		return mGestureScanner.onTouchEvent(me);
@@ -101,24 +131,12 @@ public class ShowPics extends Activity implements OnGestureListener {
 	@Override
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX,
 			float velocityY) {
-		int oldPosition = mPosition;
 		if (velocityX < 0) {
-			mPosition = Math.min(mImageNames.size() - 1, mPosition + 1);
-		} else if (velocityX > 0) {
-			mPosition = Math.max(0, mPosition - 1);
-		}
-
-		if (oldPosition != mPosition) {
-			showPicture();
+			goForward();
 			return true;
-		} else {
-			if (mPosition == 0) {
-				Toast.makeText(this, R.string.first_pic, Toast.LENGTH_SHORT)
-						.show();
-			} else if (mPosition == mImageNames.size() - 1) {
-				Toast.makeText(this, R.string.last_pic, Toast.LENGTH_SHORT)
-						.show();
-			}
+		} else if (velocityX > 0) {
+			goBack();
+			return true;
 		}
 
 		return false;
@@ -126,8 +144,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 
 	@Override
 	public void onLongPress(MotionEvent e) {
-		// TODO Auto-generated method stub
-
+		openOptionsMenu();
 	}
 
 	@Override
@@ -145,8 +162,30 @@ public class ShowPics extends Activity implements OnGestureListener {
 
 	@Override
 	public boolean onSingleTapUp(MotionEvent e) {
-		// TODO Auto-generated method stub
-		return false;
+		openOptionsMenu();
+		return true;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see android.app.Activity#onKeyDown(int, android.view.KeyEvent)
+	 */
+	@Override
+	public boolean onKeyDown(int keyCode, KeyEvent event) {
+		switch (keyCode) {
+		case KeyEvent.KEYCODE_DPAD_LEFT:
+		case KeyEvent.KEYCODE_DPAD_UP:
+			goBack();
+			return true;
+		case KeyEvent.KEYCODE_DPAD_RIGHT:
+		case KeyEvent.KEYCODE_DPAD_DOWN:
+			goForward();
+			return true;
+		case KeyEvent.KEYCODE_DPAD_CENTER:
+			openOptionsMenu();
+		}
+		return super.onKeyDown(keyCode, event);
 	}
 
 	/*
@@ -204,7 +243,8 @@ public class ShowPics extends Activity implements OnGestureListener {
 				}
 
 			}.start();
-			Toast.makeText(this, getText(R.string.wallpaper_in_progress), Toast.LENGTH_LONG).show();
+			Toast.makeText(this, getText(R.string.wallpaper_in_progress),
+					Toast.LENGTH_LONG).show();
 			return true;
 		case SAVE_ID:
 			intent = new Intent("org.openintents.action.PICK_DIRECTORY");
@@ -218,12 +258,14 @@ public class ShowPics extends Activity implements OnGestureListener {
 			return true;
 		case SEND_ID:
 			try {
-				File tmpFile = savePicture("file:///sdcard/tmp/");
+				File tmpFile = saveTmpPicture(new File(
+						EmailAlbumViewer.TMP_DIR_NAME));
 				intent = new Intent(Intent.ACTION_SEND);
 				intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(tmpFile.toURI()
 						.toString()));
+				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 				intent.setType("image/jpeg");
-				
+
 				startActivity(Intent.createChooser(intent,
 						getText(R.string.chooser_share)));
 
@@ -255,7 +297,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 				// obtain the filename
 				String dirname = data.getDataString();
 				try {
-					savePicture(dirname);
+					savePicture(new File(Uri.parse(dirname).getEncodedPath()));
 				} catch (IOException e) {
 					e.printStackTrace();
 					Toast.makeText(this, e.getLocalizedMessage(),
@@ -267,20 +309,43 @@ public class ShowPics extends Activity implements OnGestureListener {
 		}
 	}
 
-	private File savePicture(String dirname) throws IOException {
+	private File saveTmpPicture(File destDir) throws IOException {
 		File destFile = null;
-		if (dirname != null) {
-			File destDir = new File(Uri.parse(dirname).getEncodedPath());
+		if (destDir != null) {
 			if (!destDir.exists()) {
-				destDir.mkdirs();
+				try {
+					destDir.mkdirs();
+				} catch (Exception e) {
+					destDir = null;
+				}
+			} else if (!destDir.isDirectory()) {
+				destDir = null;
 			}
-			destFile = new File(destDir, mImageNames.get(mPosition).substring(
-					mImageNames.get(mPosition).lastIndexOf('/')).toLowerCase());
-
-			OutputStream destFileOS = new FileOutputStream(destFile);
-			image.getBitmap().compress(CompressFormat.JPEG, 75, destFileOS);
-			destFileOS.close();
 		}
+
+		if (destDir == null) {
+			destDir = getCacheDir();
+		}
+
+		try {
+			destFile = savePicture(destDir);
+		} catch (IOException e) {
+			if (!destDir.equals(getCacheDir())) {
+				destFile = savePicture(getCacheDir());
+			}
+		}
+		return destFile;
+	}
+
+	private File savePicture(File destDir) throws FileNotFoundException,
+			IOException {
+		File destFile;
+		destFile = new File(destDir, mImageNames.get(mPosition).substring(
+				mImageNames.get(mPosition).lastIndexOf('/')).toLowerCase());
+
+		OutputStream destFileOS = new FileOutputStream(destFile);
+		image.getBitmap().compress(CompressFormat.JPEG, 75, destFileOS);
+		destFileOS.close();
 		return destFile;
 	}
 
