@@ -11,12 +11,18 @@ import java.util.ArrayList;
 import java.util.zip.ZipFile;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Contacts;
+import android.provider.MediaStore.Images;
+import android.provider.MediaStore.Images.ImageColumns;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
@@ -35,11 +41,14 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private int mPosition;
 	private GestureDetector mGestureScanner;
 	private ZipFile archive;
-	private final static int WALLPAPER_ID = 1;
-	private static final int SAVE_ID = 2;
-	private static final int SEND_ID = 3;
+	private final static int SET_AS_ID = 1;
+	private final static int WALLPAPER_ID = 2;
+	private static final int SAVE_ID = 3;
+	private static final int SEND_ID = 4;
 	private static final int ACTIVITY_PICK_DIRECTORY_TO_SAVE = 0;
 	private BitmapDrawable image;
+
+	private static Uri sStorageURI = Images.Media.EXTERNAL_CONTENT_URI;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -204,9 +213,13 @@ public class ShowPics extends Activity implements OnGestureListener {
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// TODO Auto-generated method stub
 		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, WALLPAPER_ID, 0, R.string.menu_wallpaper);
-		menu.add(0, SAVE_ID, 0, R.string.menu_save);
-		menu.add(0, SEND_ID, 0, R.string.menu_share);
+		MenuItem item = menu.add(0, SET_AS_ID, 0, R.string.menu_set_as);
+		item.setIcon(android.R.drawable.ic_menu_set_as);
+		item = menu.add(0, SEND_ID, 0, R.string.menu_share);
+		item.setIcon(android.R.drawable.ic_menu_share);
+		item = menu.add(0, SAVE_ID, 0, R.string.menu_save);
+		item.setIcon(android.R.drawable.ic_menu_save);
+
 		return result;
 	}
 
@@ -215,57 +228,29 @@ public class ShowPics extends Activity implements OnGestureListener {
 		// TODO Auto-generated method stub
 		Intent intent = null;
 		switch (item.getItemId()) {
-		case WALLPAPER_ID:
-			new Thread() {
-
-				/*
-				 * (non-Javadoc)
-				 * 
-				 * @see java.lang.Thread#run()
-				 */
-				@Override
-				public void run() {
-					try {
-						InputStream imageIS = archive.getInputStream(archive
-								.getEntry(mImageNames.get(mPosition)));
-						BitmapDrawable source = new BitmapDrawable(imageIS);
-						int srcW = source.getBitmap().getWidth();
-						int srcH = source.getBitmap().getHeight();
-						float srcRatio = (float) srcW / (float) srcH;
-						int dstW = getWallpaperDesiredMinimumWidth();
-						int dstH = (int) (dstW / srcRatio);
-						Bitmap wallpaper = Bitmap.createScaledBitmap(source
-								.getBitmap(), dstW, dstH, true);
-						setWallpaper(wallpaper);
-					} catch (IOException e) {
-						Log.e(this.getClass().getName(), "Wallpaper error", e);
-					}
-				}
-
-			}.start();
-			Toast.makeText(this, getText(R.string.wallpaper_in_progress),
-					Toast.LENGTH_LONG).show();
-			return true;
 		case SAVE_ID:
 			intent = new Intent("org.openintents.action.PICK_DIRECTORY");
 			intent.setData(Uri.parse("file:///sdcard"));
 			intent.putExtra("org.openintents.extra.TITLE",
-					getText(R.string.select_file));
+					getText(R.string.select_directory));
 			intent.putExtra("org.openintents.extra.BUTTON_TEXT",
-					getText(R.string.btn_select_file));
+					getText(R.string.btn_select_directory));
 
 			startActivityForResult(intent, ACTIVITY_PICK_DIRECTORY_TO_SAVE);
 			return true;
 		case SEND_ID:
+		case SET_AS_ID:
 			try {
-				File tmpFile = saveTmpPicture(new File(
-						EmailAlbumViewer.TMP_DIR_NAME));
-				intent = new Intent(Intent.ACTION_SEND);
-				intent.putExtra(Intent.EXTRA_STREAM, Uri.parse(tmpFile.toURI()
-						.toString()));
-				intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-				intent.setType("image/jpeg");
+				Uri fileUri = storePicture(saveTmpPicture(new File(
+						EmailAlbumViewer.TMP_DIR_NAME)));
+				if (item.getItemId() == SEND_ID) {
+					intent = new Intent(Intent.ACTION_SEND, fileUri);
+					intent.putExtra(Intent.EXTRA_STREAM, fileUri);
+					intent.setType("image/jpeg");
+				} else if (item.getItemId() == SET_AS_ID) {
+					intent = new Intent(Intent.ACTION_ATTACH_DATA, fileUri);
 
+				}
 				startActivity(Intent.createChooser(intent,
 						getText(R.string.chooser_share)));
 
@@ -278,6 +263,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 			}
 
 			return true;
+
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -347,6 +333,49 @@ public class ShowPics extends Activity implements OnGestureListener {
 		image.getBitmap().compress(CompressFormat.JPEG, 75, destFileOS);
 		destFileOS.close();
 		return destFile;
+	}
+
+	private Uri storePicture(File imageFile) {
+		ContentResolver cr = getContentResolver();
+
+		ContentValues values = new ContentValues(7);
+		values.put(Images.Media.TITLE, mImageNames.get(mPosition));
+		values.put(Images.Media.DISPLAY_NAME, mImageNames.get(mPosition));
+		values.put(Images.Media.DESCRIPTION, "");
+		values.put(Images.Media.DATE_TAKEN, System.currentTimeMillis());
+		values.put(Images.Media.MIME_TYPE, "image/jpeg");
+		values.put(Images.Media.ORIENTATION, 0);
+		File parentFile = imageFile.getParentFile();
+		String path = parentFile.toString().toLowerCase();
+		String name = parentFile.getName().toLowerCase();
+		values.put(Images.ImageColumns.BUCKET_ID, path.hashCode());
+		values.put(Images.ImageColumns.BUCKET_DISPLAY_NAME, name);
+		values.put("_data", imageFile.toString());
+
+		Uri uri = cr.insert(sStorageURI, values);
+
+		// The line above will create a filename that ends in .jpg
+		// That filename is what will be handed to gmail when a user shares a
+		// photo.
+		// Gmail gets the name of the picture attachment from the "DISPLAY_NAME"
+		// field.
+		// Extract the filename and jam it into the display name.
+		// Cursor c = cr.query(uri, new String[] { ImageColumns._ID,
+		// Images.Media.DISPLAY_NAME, "_data" }, null, null, null);
+		// if (c.moveToFirst()) {
+		// String filePath = c.getString(2);
+		// if (filePath != null) {
+		// int pos = filePath.lastIndexOf("/");
+		// if (pos >= 0) {
+		// filePath = filePath.substring(pos + 1); // pick off the
+		// // filename
+		// c.updateString(1, filePath);
+		// c.commitUpdates();
+		// }
+		// }
+		// }
+		// c.close();
+		return uri;
 	}
 
 }

@@ -180,18 +180,21 @@ public class EmailAlbumViewer extends ListActivity {
 		}
 
 		if (mAlbumFileUri == null) {
-			Intent intent = new Intent("org.openintents.action.PICK_FILE");
-			intent.setData(Uri.parse("file:///sdcard"));
-			intent.putExtra("org.openintents.extra.TITLE",
-					getText(R.string.select_file));
-			intent.putExtra("org.openintents.extra.BUTTON_TEXT",
-					getText(R.string.btn_select_file));
+			openAlbum();
 
-			startActivityForResult(intent, ACTIVITY_PICK_FILE);
-
-			setContentView(R.layout.content_list);
 		}
 
+	}
+
+	private void openAlbum() {
+		Intent intent = new Intent("org.openintents.action.PICK_FILE");
+		intent.setData(Uri.parse("file:///sdcard"));
+		intent.putExtra("org.openintents.extra.TITLE",
+				getText(R.string.select_file));
+		intent.putExtra("org.openintents.extra.BUTTON_TEXT",
+				getText(R.string.btn_select_file));
+
+		startActivityForResult(intent, ACTIVITY_PICK_FILE);
 	}
 
 	/*
@@ -300,6 +303,7 @@ public class EmailAlbumViewer extends ListActivity {
 		// TODO Auto-generated method stub
 		switch (item.getItemId()) {
 		case LOAD_ALBUM_ID:
+			openAlbum();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);

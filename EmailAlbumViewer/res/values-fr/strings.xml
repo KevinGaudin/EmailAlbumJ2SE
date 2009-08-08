@@ -13,15 +13,13 @@
 		de votre album.</string>
 	<string name="select_file">Choisissez votre album...</string>
 	<string name="btn_select_file">Celui-ci !</string>
-	<string name="menu_wallpaper">Fond d'écran</string>
+	<string name="select_directory">Choisissez le dossier de destination...</string>
+	<string name="btn_select_directory">Celui-là !</string>
+	<string name="menu_set_as">Définir comme...</string>
 	<string name="menu_load_album">Voir un autre album</string>
-	<string name="error_wallpaper">Erreur lors de la mise en place du fond
-		d'écran.</string>
 	<string name="menu_share">Partager</string>
-	<string name="chooser_share">Partager avec...</string>
-	<string name="menu_save">Enregistrer cette image</string>
+	<string name="chooser_share">Ouvrir avec...</string>
+	<string name="menu_save">Enregistrer</string>
 	<string name="error_other_intents">Erreur à la création du menu alternatif
-	</string>
-	<string name="wallpaper_in_progress">Votre fond d'écran sera remplacé d'ici quelques instants.
 	</string>
 </resources>
