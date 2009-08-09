@@ -14,16 +14,11 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
-import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.Contacts;
 import android.provider.MediaStore.Images;
-import android.provider.MediaStore.Images.ImageColumns;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -337,10 +332,11 @@ public class ShowPics extends Activity implements OnGestureListener {
 
 	private Uri storePicture(File imageFile) {
 		ContentResolver cr = getContentResolver();
-
+		String imageName = mImageNames.get(mPosition);
+		imageName = imageName.substring(imageName.lastIndexOf('/')+1);
 		ContentValues values = new ContentValues(7);
-		values.put(Images.Media.TITLE, mImageNames.get(mPosition));
-		values.put(Images.Media.DISPLAY_NAME, mImageNames.get(mPosition));
+		values.put(Images.Media.TITLE, imageName);
+		values.put(Images.Media.DISPLAY_NAME, imageName);
 		values.put(Images.Media.DESCRIPTION, "");
 		values.put(Images.Media.DATE_TAKEN, System.currentTimeMillis());
 		values.put(Images.Media.MIME_TYPE, "image/jpeg");
@@ -354,27 +350,6 @@ public class ShowPics extends Activity implements OnGestureListener {
 
 		Uri uri = cr.insert(sStorageURI, values);
 
-		// The line above will create a filename that ends in .jpg
-		// That filename is what will be handed to gmail when a user shares a
-		// photo.
-		// Gmail gets the name of the picture attachment from the "DISPLAY_NAME"
-		// field.
-		// Extract the filename and jam it into the display name.
-		// Cursor c = cr.query(uri, new String[] { ImageColumns._ID,
-		// Images.Media.DISPLAY_NAME, "_data" }, null, null, null);
-		// if (c.moveToFirst()) {
-		// String filePath = c.getString(2);
-		// if (filePath != null) {
-		// int pos = filePath.lastIndexOf("/");
-		// if (pos >= 0) {
-		// filePath = filePath.substring(pos + 1); // pick off the
-		// // filename
-		// c.updateString(1, filePath);
-		// c.commitUpdates();
-		// }
-		// }
-		// }
-		// c.close();
 		return uri;
 	}
 
