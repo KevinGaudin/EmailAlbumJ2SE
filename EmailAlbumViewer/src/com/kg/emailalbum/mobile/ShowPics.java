@@ -40,6 +40,8 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private final static int WALLPAPER_ID = 2;
 	private static final int SAVE_ID = 3;
 	private static final int SEND_ID = 4;
+	private static final int ABOUT_ID = 5;
+
 	private static final int ACTIVITY_PICK_DIRECTORY_TO_SAVE = 0;
 	private BitmapDrawable image;
 
@@ -214,7 +216,8 @@ public class ShowPics extends Activity implements OnGestureListener {
 		item.setIcon(android.R.drawable.ic_menu_share);
 		item = menu.add(0, SAVE_ID, 0, R.string.menu_save);
 		item.setIcon(android.R.drawable.ic_menu_save);
-
+		item = menu.add(0, ABOUT_ID, 0, R.string.menu_about);
+		item.setIcon(android.R.drawable.ic_menu_help);
 		return result;
 	}
 
@@ -257,6 +260,11 @@ public class ShowPics extends Activity implements OnGestureListener {
 						.show();
 			}
 
+			return true;
+			
+		case ABOUT_ID:
+			intent = new Intent(this, AboutDialog.class);
+			startActivity(intent);
 			return true;
 
 		}
@@ -333,7 +341,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private Uri storePicture(File imageFile) {
 		ContentResolver cr = getContentResolver();
 		String imageName = mImageNames.get(mPosition);
-		imageName = imageName.substring(imageName.lastIndexOf('/')+1);
+		imageName = imageName.substring(imageName.lastIndexOf('/') + 1);
 		ContentValues values = new ContentValues(7);
 		values.put(Images.Media.TITLE, imageName);
 		values.put(Images.Media.DISPLAY_NAME, imageName);

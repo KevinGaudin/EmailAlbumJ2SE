@@ -19,6 +19,26 @@
 	<string name="menu_share">Share</string>
 	<string name="chooser_share">Open with...</string>
 	<string name="menu_save">Save this image</string>
+	<string name="menu_about">About EmailAlbum Viewer</string>
 	<string name="error_other_intents">Error while building other intents menu.
 	</string>
+	<string name="about_go_web">Donate via PayPal</string>
+	<string name="about_text">
+		This viewer is brought to you by the author of
+		EmailAlbum.\n\n
+		It has been developed to allow users of EmailAlbum to
+		open their
+		albums on Android devices, but it can also open any zip
+		archive
+		containing pictures.\n\n
+		EmailAlbum is an opensource
+		multi-platform software
+		allowing to simply pack a bunch of large
+		picture in a compact
+		multi-platform self-executable archive suitable
+		for e-mailing.\n\n
+		Visit http://emailalbum.googlecode.com for more
+		details.
+	</string>
+	<string name="url_donate">https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=DT9H5GSCL9U76&amp;lc=EN&amp;item_name=EmailAlbum%20Viewer&amp;currency_code=EUR&amp;bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted</string>
 </resources>
