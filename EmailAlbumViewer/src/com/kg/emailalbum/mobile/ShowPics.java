@@ -13,39 +13,52 @@ import java.util.zip.ZipFile;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap.CompressFormat;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore.Images;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.GestureDetector.OnGestureListener;
+import android.view.animation.Animation;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.ViewFlipper;
 
 public class ShowPics extends Activity implements OnGestureListener {
-	private ImageView mImgView;
+	private final static int SET_AS_ID = 1;
+	private static final int SAVE_ID = 2;
+	private static final int SEND_ID = 3;
+	private static final int ABOUT_ID = 4;
+
+	private static final int BACKWARD = -1;
+	private static final int FORWARD = 1;
+
+	private static final int ACTIVITY_PICK_DIRECTORY_TO_SAVE = 0;
+
+	private static Uri sStorageURI = Images.Media.EXTERNAL_CONTENT_URI;
+
+	private ImageView[] mImgViews = new ImageView[3];
+	private ViewFlipper mFlipper;
 	private ArrayList<String> mImageNames;
 	private String mAlbumName;
 	private int mPosition;
+	private int mOldPosition;
+	private int mLatestMove = FORWARD;
+	private int prevPic, curPic, nextPic;
 	private GestureDetector mGestureScanner;
 	private ZipFile archive;
-	private final static int SET_AS_ID = 1;
-	private final static int WALLPAPER_ID = 2;
-	private static final int SAVE_ID = 3;
-	private static final int SEND_ID = 4;
-	private static final int ABOUT_ID = 5;
-
-	private static final int ACTIVITY_PICK_DIRECTORY_TO_SAVE = 0;
-	private BitmapDrawable image;
-
-	private static Uri sStorageURI = Images.Media.EXTERNAL_CONTENT_URI;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +66,19 @@ public class ShowPics extends Activity implements OnGestureListener {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.content_view);
 
-		mImgView = (ImageView) findViewById(R.id.showpic);
+		curPic = 0;
+		mImgViews[curPic] = (ImageView) findViewById(R.id.pic0);
+		nextPic = 1;
+		mImgViews[nextPic] = (ImageView) findViewById(R.id.pic1);
+		prevPic = 2;
+		mImgViews[prevPic] = (ImageView) findViewById(R.id.pic2);
+		mFlipper = (ViewFlipper) findViewById(R.id.flipper);
+		mFlipper.setInAnimation(getApplicationContext(), R.anim.push_left_in);
+		mFlipper.setOutAnimation(getApplicationContext(), R.anim.push_left_out);
+		mFlipper.setPersistentDrawingCache(ViewGroup.PERSISTENT_NO_CACHE);
 		mGestureScanner = new GestureDetector(this);
+
+		mOldPosition = -1;
 
 		if (getIntent() != null) {
 			mImageNames = getIntent().getStringArrayListExtra("PICS");
@@ -78,6 +102,48 @@ public class ShowPics extends Activity implements OnGestureListener {
 			archive = new ZipFile(albumFile);
 			showPicture();
 		} catch (Exception e) {
+			Log.e(this.getClass().getName(), "onCreate() exception", e);
+			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT)
+					.show();
+		}
+	}
+
+	private void resetViews() {
+		try {
+			InputStream imageIS;
+			if (mOldPosition < mPosition) {
+				// Gone forward
+				prevPic = (prevPic + 1) % 3;
+				curPic = (curPic + 1) % 3;
+				nextPic = (nextPic + 1) % 3;
+				if (mPosition + 1 < mImageNames.size()) {
+					imageIS = archive.getInputStream(archive
+							.getEntry(mImageNames.get(mPosition + 1)));
+					if(mImgViews[nextPic].getDrawable() != null) {
+						((BitmapDrawable) mImgViews[nextPic].getDrawable()).getBitmap().recycle();
+					}
+					mImgViews[nextPic].setImageBitmap(BitmapFactory
+							.decodeStream(imageIS));
+					imageIS.close();
+				}
+			} else if (mOldPosition > mPosition) {
+				// Gone backward
+				prevPic = (prevPic == 0) ? 2 : prevPic - 1 ;
+				curPic = (curPic == 0) ? 2 : curPic - 1 ;
+				nextPic = (nextPic == 0) ? 2 : nextPic - 1 ;
+				if (mPosition - 1 >= 0) {
+					imageIS = archive.getInputStream(archive
+							.getEntry(mImageNames.get(mPosition - 1)));
+					if(mImgViews[prevPic].getDrawable() != null) {
+						((BitmapDrawable) mImgViews[prevPic].getDrawable()).getBitmap().recycle();
+					}
+					mImgViews[prevPic].setImageBitmap(BitmapFactory
+							.decodeStream(imageIS));
+					imageIS.close();
+				}
+			}
+		} catch (Exception e) {
+			Log.e(this.getClass().getName(), "ResetViews() exception", e);
 			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT)
 					.show();
 		}
@@ -85,20 +151,73 @@ public class ShowPics extends Activity implements OnGestureListener {
 
 	private void showPicture() {
 		try {
-			InputStream imageIS = archive.getInputStream(archive
-					.getEntry(mImageNames.get(mPosition)));
-			image = new BitmapDrawable(imageIS);
-			mImgView.setImageDrawable(image);
+			InputStream imageIS;
+			if (mOldPosition == -1) {
+				// First load, initialize from archive
+				imageIS = archive.getInputStream(archive.getEntry(mImageNames
+						.get(mPosition)));
+				mImgViews[curPic].setImageBitmap(BitmapFactory.decodeStream(imageIS));
+				imageIS.close();
+				if (mPosition > 0) {
+					imageIS = archive.getInputStream(archive
+							.getEntry(mImageNames.get(mPosition - 1)));
+					mImgViews[prevPic].setImageBitmap(BitmapFactory
+							.decodeStream(imageIS));
+					imageIS.close();
+				}
+				if (mPosition < mImageNames.size() - 1) {
+					imageIS = archive.getInputStream(archive
+							.getEntry(mImageNames.get(mPosition + 1)));
+					mImgViews[nextPic].setImageBitmap(BitmapFactory
+							.decodeStream(imageIS));
+					imageIS.close();
+				}
+			} else if (mOldPosition < mPosition) {
+				// Going forward
+				applyTransition(FORWARD);
+			} else if (mOldPosition > mPosition) {
+				// Going backward
+				applyTransition(BACKWARD);
+			}
 		} catch (Exception e) {
+			Log.e(this.getClass().getName(), "showPicture() exception", e);
 			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT)
 					.show();
 		}
 	}
 
+	private void applyTransition(int direction) {
+
+		switch (direction) {
+		case FORWARD:
+			if (mLatestMove != FORWARD) {
+				mFlipper.setInAnimation(getApplicationContext(),
+						R.anim.push_left_in);
+				mFlipper.setOutAnimation(getApplicationContext(),
+						R.anim.push_left_out);
+			}
+			mFlipper.showNext();
+			mLatestMove = FORWARD;
+			resetViews();
+			break;
+		case BACKWARD:
+			if (mLatestMove != BACKWARD) {
+				mFlipper.setInAnimation(getApplicationContext(),
+						R.anim.push_right_in);
+				mFlipper.setOutAnimation(getApplicationContext(),
+						R.anim.push_right_out);
+			}
+			mFlipper.showPrevious();
+			resetViews();
+			mLatestMove = BACKWARD;
+			break;
+		}
+	}
+
 	private void goBack() {
-		int oldPosition = mPosition;
+		mOldPosition = mPosition;
 		mPosition = Math.max(0, mPosition - 1);
-		if (oldPosition != mPosition) {
+		if (mOldPosition != mPosition) {
 			showPicture();
 		} else {
 			toastFirstOrLast();
@@ -106,9 +225,9 @@ public class ShowPics extends Activity implements OnGestureListener {
 	}
 
 	private void goForward() {
-		int oldPosition = mPosition;
+		mOldPosition = mPosition;
 		mPosition = Math.min(mImageNames.size() - 1, mPosition + 1);
-		if (oldPosition != mPosition) {
+		if (mOldPosition != mPosition) {
 			showPicture();
 		} else {
 			toastFirstOrLast();
@@ -253,6 +372,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 						getText(R.string.chooser_share)));
 
 			} catch (IOException e) {
+				Log.e(this.getClass().getName(), "other intents exception", e);
 				Toast.makeText(
 						this,
 						getText(R.string.error_other_intents) + " : "
@@ -261,7 +381,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 			}
 
 			return true;
-			
+
 		case ABOUT_ID:
 			intent = new Intent(this, AboutDialog.class);
 			startActivity(intent);
@@ -288,7 +408,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 				try {
 					savePicture(new File(Uri.parse(dirname).getEncodedPath()));
 				} catch (IOException e) {
-					e.printStackTrace();
+					Log.e(this.getClass().getName(), "onActivityResult() exception", e);
 					Toast.makeText(this, e.getLocalizedMessage(),
 							Toast.LENGTH_SHORT).show();
 				}
@@ -333,7 +453,13 @@ public class ShowPics extends Activity implements OnGestureListener {
 				mImageNames.get(mPosition).lastIndexOf('/')).toLowerCase());
 
 		OutputStream destFileOS = new FileOutputStream(destFile);
-		image.getBitmap().compress(CompressFormat.JPEG, 75, destFileOS);
+		InputStream imageIS = archive.getInputStream(archive
+				.getEntry(mImageNames.get(mPosition)));
+		byte[] buffer = new byte[200];
+		int len = 0;
+		while ((len = imageIS.read(buffer)) >= 0) {
+			destFileOS.write(buffer, 0, len);
+		}
 		destFileOS.close();
 		return destFile;
 	}
