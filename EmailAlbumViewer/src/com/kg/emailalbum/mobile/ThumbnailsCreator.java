@@ -1,6 +1,7 @@
 package com.kg.emailalbum.mobile;
 
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.zip.ZipFile;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Bitmap.CompressFormat;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -45,36 +47,43 @@ public class ThumbnailsCreator extends Thread {
 			try {
 				ZipEntry entry = null;
 				String entryName = null;
-				if(mClearThumbnails) {
+				if (mClearThumbnails) {
 					clearFiles();
 				}
 				Iterator<String> iPictures = mPictures.iterator();
 				int pos = 0;
 				List<String> files = Arrays.asList(mContext.fileList());
+				Bitmap source = null;
+				Bitmap thumb = null;
+				InputStream entryIS = null;
+				OutputStream thumbOS = null;
 				while (mContinueCreation && iPictures.hasNext()) {
 					entryName = iPictures.next();
 					entry = mArchive.getEntry(entryName);
-					String thumbName = THUMBS_PREFIX + entryName.substring(entryName
-							.lastIndexOf('/') + 1);
-					if(!files.contains(thumbName)) {
-					
-							BitmapDrawable source = new BitmapDrawable(mArchive
-									.getInputStream(entry));
-							float ratio = (float) (source.getBitmap().getWidth())
-									/ (float) (source.getBitmap().getHeight());
-							int dstW, dstH;
-							dstW = 80;
-							dstH = (int) (dstW / ratio);
-							Bitmap thumb = Bitmap.createScaledBitmap(
-									source.getBitmap(), dstW, dstH, true);
-		
-							OutputStream thumbOS = mContext.openFileOutput(thumbName,
-									Context.MODE_PRIVATE);
-		
-							thumb.compress(CompressFormat.JPEG, 75, thumbOS);
-							thumbOS.close();
+					String thumbName = THUMBS_PREFIX
+							+ entryName
+									.substring(entryName.lastIndexOf('/') + 1);
+					if (!files.contains(thumbName)) {
+						entryIS = mArchive.getInputStream(entry);
+						source = BitmapFactory.decodeStream(entryIS);
+						entryIS.close();
+						float ratio = (float) (source.getWidth())
+								/ (float) (source.getHeight());
+						int dstW, dstH;
+						dstW = 80;
+						dstH = (int) (dstW / ratio);
+						thumb = Bitmap.createScaledBitmap(source, dstW, dstH,
+								true);
+
+						thumbOS = mContext.openFileOutput(thumbName,
+								Context.MODE_PRIVATE);
+
+						thumb.compress(CompressFormat.JPEG, 75, thumbOS);
+						thumbOS.close();
+						thumb.recycle();
+						source.recycle();
 					}
-					
+
 					mThumbnails.put(entryName, mContext.getFileStreamPath(
 							thumbName).getAbsolutePath());
 					sendThumbnail(pos);
@@ -112,8 +121,8 @@ public class ThumbnailsCreator extends Thread {
 		msg.setData(data);
 		mHandler.sendMessage(msg);
 	}
-	
-	public void stopCreation(){
+
+	public void stopCreation() {
 		mContinueCreation = false;
 	}
 
