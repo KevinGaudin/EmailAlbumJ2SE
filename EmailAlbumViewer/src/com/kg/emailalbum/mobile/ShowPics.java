@@ -11,8 +11,11 @@ import java.util.ArrayList;
 import java.util.zip.ZipFile;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -424,8 +427,11 @@ public class ShowPics extends Activity implements OnGestureListener {
 					getText(R.string.select_directory));
 			intent.putExtra("org.openintents.extra.BUTTON_TEXT",
 					getText(R.string.btn_select_directory));
-
-			startActivityForResult(intent, ACTIVITY_PICK_DIRECTORY_TO_SAVE);
+			try {
+				startActivityForResult(intent, ACTIVITY_PICK_DIRECTORY_TO_SAVE);
+			} catch (ActivityNotFoundException e) {
+				alertOIFileManagerIsMissing();
+			}
 			return true;
 		case SEND_ID:
 		case SET_AS_ID:
@@ -585,4 +591,26 @@ public class ShowPics extends Activity implements OnGestureListener {
 		}
 	};
 
+	private void alertOIFileManagerIsMissing() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+		builder.setMessage(R.string.alert_filemanager_missing)
+		       .setCancelable(false)
+		       .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+		           public void onClick(DialogInterface dialog, int id) {
+		                getOIFileManager();
+		           }
+		       })
+		       .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+		           public void onClick(DialogInterface dialog, int id) {
+		                dialog.cancel();
+		           }
+		       });
+		AlertDialog alert = builder.create();
+		alert.show();
+	}
+
+	protected void getOIFileManager() {
+		Intent i = new Intent(Intent.ACTION_VIEW,Uri.parse("market://search?q=pname:org.openintents.filemanager"));
+		startActivity(i);
+	}
 }

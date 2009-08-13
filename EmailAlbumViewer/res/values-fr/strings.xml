@@ -37,5 +37,6 @@
 	</string>
 	<string name="url_donate">
 		https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=DT9H5GSCL9U76&amp;lc=FR&amp;item_name=EmailAlbum%20Viewer&amp;currency_code=EUR&amp;bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted</string>
+<string name="alert_filemanager_missing">OI File Manager est nécessaire pour ouvrir des albums et enregistrer des images depuis/vers la SD Card. Voulez-vous l'installer ? (C'est gratuit)</string>
 	
 </resources>

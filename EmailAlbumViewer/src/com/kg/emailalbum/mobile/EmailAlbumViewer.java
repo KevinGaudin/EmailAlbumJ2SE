@@ -30,10 +30,13 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.ProgressDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -198,8 +201,34 @@ public class EmailAlbumViewer extends ListActivity {
 				getText(R.string.select_file));
 		intent.putExtra("org.openintents.extra.BUTTON_TEXT",
 				getText(R.string.btn_select_file));
+		try {
+			startActivityForResult(intent, ACTIVITY_PICK_FILE);
+		} catch (ActivityNotFoundException e) {
+			alertOIFileManagerIsMissing();
+		}
+	}
 
-		startActivityForResult(intent, ACTIVITY_PICK_FILE);
+	private void alertOIFileManagerIsMissing() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+		builder.setMessage(R.string.alert_filemanager_missing)
+		       .setCancelable(false)
+		       .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+		           public void onClick(DialogInterface dialog, int id) {
+		                getOIFileManager();
+		           }
+		       })
+		       .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+		           public void onClick(DialogInterface dialog, int id) {
+		                dialog.cancel();
+		           }
+		       });
+		AlertDialog alert = builder.create();
+		alert.show();
+	}
+
+	protected void getOIFileManager() {
+		Intent i = new Intent(Intent.ACTION_VIEW,Uri.parse("market://search?q=pname:org.openintents.filemanager"));
+		startActivity(i);
 	}
 
 	/*
