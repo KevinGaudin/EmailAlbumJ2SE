@@ -13,11 +13,11 @@ import java.util.zip.ZipFile;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore.Images;
@@ -27,11 +27,11 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
@@ -59,6 +59,11 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private int prevPic, curPic, nextPic;
 	private GestureDetector mGestureScanner;
 	private ZipFile archive;
+	private Animation mAnimPushLeftIn;
+	private Animation mAnimPushLeftOut;
+	private Animation mAnimPushRightOut;
+	private Animation mAnimPushRightIn;
+	private boolean mIsFlipping = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -72,9 +77,24 @@ public class ShowPics extends Activity implements OnGestureListener {
 		mImgViews[nextPic] = (ImageView) findViewById(R.id.pic1);
 		prevPic = 2;
 		mImgViews[prevPic] = (ImageView) findViewById(R.id.pic2);
+
+		// Preload all animations and set listener on only one of each in/out
+		// pair as they are
+		// run simultaneously
+		mAnimPushLeftIn = AnimationUtils.loadAnimation(getApplicationContext(),
+				R.anim.push_left_in);
+		mAnimPushLeftIn.setAnimationListener(animListener);
+		mAnimPushLeftOut = AnimationUtils.loadAnimation(
+				getApplicationContext(), R.anim.push_left_out);
+		mAnimPushRightIn = AnimationUtils.loadAnimation(
+				getApplicationContext(), R.anim.push_right_in);
+		mAnimPushRightIn.setAnimationListener(animListener);
+		mAnimPushRightOut = AnimationUtils.loadAnimation(
+				getApplicationContext(), R.anim.push_right_out);
+
 		mFlipper = (ViewFlipper) findViewById(R.id.flipper);
-		mFlipper.setInAnimation(getApplicationContext(), R.anim.push_left_in);
-		mFlipper.setOutAnimation(getApplicationContext(), R.anim.push_left_out);
+		mFlipper.setInAnimation(mAnimPushLeftIn);
+		mFlipper.setOutAnimation(mAnimPushLeftOut);
 		mFlipper.setPersistentDrawingCache(ViewGroup.PERSISTENT_NO_CACHE);
 		mGestureScanner = new GestureDetector(this);
 
@@ -108,6 +128,24 @@ public class ShowPics extends Activity implements OnGestureListener {
 		}
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see android.app.Activity#onDestroy()
+	 */
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		if (isFinishing()) {
+			for (ImageView view : mImgViews) {
+				Drawable toRecycle = view.getDrawable();
+				if (toRecycle != null) {
+					((BitmapDrawable) toRecycle).getBitmap().recycle();
+				}
+			}
+		}
+	}
+
 	private void resetViews() {
 		try {
 			InputStream imageIS;
@@ -119,8 +157,9 @@ public class ShowPics extends Activity implements OnGestureListener {
 				if (mPosition + 1 < mImageNames.size()) {
 					imageIS = archive.getInputStream(archive
 							.getEntry(mImageNames.get(mPosition + 1)));
-					if(mImgViews[nextPic].getDrawable() != null) {
-						((BitmapDrawable) mImgViews[nextPic].getDrawable()).getBitmap().recycle();
+					if (mImgViews[nextPic].getDrawable() != null) {
+						((BitmapDrawable) mImgViews[nextPic].getDrawable())
+								.getBitmap().recycle();
 					}
 					mImgViews[nextPic].setImageBitmap(BitmapFactory
 							.decodeStream(imageIS));
@@ -128,14 +167,15 @@ public class ShowPics extends Activity implements OnGestureListener {
 				}
 			} else if (mOldPosition > mPosition) {
 				// Gone backward
-				prevPic = (prevPic == 0) ? 2 : prevPic - 1 ;
-				curPic = (curPic == 0) ? 2 : curPic - 1 ;
-				nextPic = (nextPic == 0) ? 2 : nextPic - 1 ;
+				prevPic = (prevPic == 0) ? 2 : prevPic - 1;
+				curPic = (curPic == 0) ? 2 : curPic - 1;
+				nextPic = (nextPic == 0) ? 2 : nextPic - 1;
 				if (mPosition - 1 >= 0) {
 					imageIS = archive.getInputStream(archive
 							.getEntry(mImageNames.get(mPosition - 1)));
-					if(mImgViews[prevPic].getDrawable() != null) {
-						((BitmapDrawable) mImgViews[prevPic].getDrawable()).getBitmap().recycle();
+					if (mImgViews[prevPic].getDrawable() != null) {
+						((BitmapDrawable) mImgViews[prevPic].getDrawable())
+								.getBitmap().recycle();
 					}
 					mImgViews[prevPic].setImageBitmap(BitmapFactory
 							.decodeStream(imageIS));
@@ -154,23 +194,33 @@ public class ShowPics extends Activity implements OnGestureListener {
 			InputStream imageIS;
 			if (mOldPosition == -1) {
 				// First load, initialize from archive
-				imageIS = archive.getInputStream(archive.getEntry(mImageNames
-						.get(mPosition)));
-				mImgViews[curPic].setImageBitmap(BitmapFactory.decodeStream(imageIS));
-				imageIS.close();
-				if (mPosition > 0) {
+				Object data = getLastNonConfigurationInstance();
+				if (data != null) {
+					Bitmap[] bitmaps = (Bitmap[]) data;
+					mImgViews[curPic].setImageBitmap(bitmaps[0]);
+					mImgViews[nextPic].setImageBitmap(bitmaps[1]);
+					mImgViews[prevPic].setImageBitmap(bitmaps[2]);
+				} else {
+
 					imageIS = archive.getInputStream(archive
-							.getEntry(mImageNames.get(mPosition - 1)));
-					mImgViews[prevPic].setImageBitmap(BitmapFactory
+							.getEntry(mImageNames.get(mPosition)));
+					mImgViews[curPic].setImageBitmap(BitmapFactory
 							.decodeStream(imageIS));
 					imageIS.close();
-				}
-				if (mPosition < mImageNames.size() - 1) {
-					imageIS = archive.getInputStream(archive
-							.getEntry(mImageNames.get(mPosition + 1)));
-					mImgViews[nextPic].setImageBitmap(BitmapFactory
-							.decodeStream(imageIS));
-					imageIS.close();
+					if (mPosition > 0) {
+						imageIS = archive.getInputStream(archive
+								.getEntry(mImageNames.get(mPosition - 1)));
+						mImgViews[prevPic].setImageBitmap(BitmapFactory
+								.decodeStream(imageIS));
+						imageIS.close();
+					}
+					if (mPosition < mImageNames.size() - 1) {
+						imageIS = archive.getInputStream(archive
+								.getEntry(mImageNames.get(mPosition + 1)));
+						mImgViews[nextPic].setImageBitmap(BitmapFactory
+								.decodeStream(imageIS));
+						imageIS.close();
+					}
 				}
 			} else if (mOldPosition < mPosition) {
 				// Going forward
@@ -191,46 +241,48 @@ public class ShowPics extends Activity implements OnGestureListener {
 		switch (direction) {
 		case FORWARD:
 			if (mLatestMove != FORWARD) {
-				mFlipper.setInAnimation(getApplicationContext(),
-						R.anim.push_left_in);
-				mFlipper.setOutAnimation(getApplicationContext(),
-						R.anim.push_left_out);
+				mFlipper.setInAnimation(mAnimPushLeftIn);
+				mFlipper.setOutAnimation(mAnimPushLeftOut);
 			}
+
 			mFlipper.showNext();
 			mLatestMove = FORWARD;
-			resetViews();
+
 			break;
 		case BACKWARD:
 			if (mLatestMove != BACKWARD) {
-				mFlipper.setInAnimation(getApplicationContext(),
-						R.anim.push_right_in);
-				mFlipper.setOutAnimation(getApplicationContext(),
-						R.anim.push_right_out);
+				mFlipper.setInAnimation(mAnimPushRightIn);
+				mFlipper.setOutAnimation(mAnimPushRightOut);
 			}
 			mFlipper.showPrevious();
-			resetViews();
 			mLatestMove = BACKWARD;
 			break;
 		}
 	}
 
 	private void goBack() {
-		mOldPosition = mPosition;
-		mPosition = Math.max(0, mPosition - 1);
-		if (mOldPosition != mPosition) {
-			showPicture();
-		} else {
-			toastFirstOrLast();
+		if (!mIsFlipping) {
+			mIsFlipping = true;
+			mOldPosition = mPosition;
+			mPosition = Math.max(0, mPosition - 1);
+			if (mOldPosition != mPosition) {
+				showPicture();
+			} else {
+				toastFirstOrLast();
+			}
 		}
 	}
 
 	private void goForward() {
-		mOldPosition = mPosition;
-		mPosition = Math.min(mImageNames.size() - 1, mPosition + 1);
-		if (mOldPosition != mPosition) {
-			showPicture();
-		} else {
-			toastFirstOrLast();
+		if (!mIsFlipping) {
+			mIsFlipping = true;
+			mOldPosition = mPosition;
+			mPosition = Math.min(mImageNames.size() - 1, mPosition + 1);
+			if (mOldPosition != mPosition) {
+				showPicture();
+			} else {
+				toastFirstOrLast();
+			}
 		}
 	}
 
@@ -326,6 +378,26 @@ public class ShowPics extends Activity implements OnGestureListener {
 		super.onSaveInstanceState(outState);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see android.app.Activity#onRetainNonConfigurationInstance()
+	 */
+	@Override
+	public Object onRetainNonConfigurationInstance() {
+		Bitmap[] bitmaps = new Bitmap[3];
+		Drawable draw = mImgViews[curPic].getDrawable();
+		if (draw != null)
+			bitmaps[0] = ((BitmapDrawable) draw).getBitmap();
+		draw = mImgViews[nextPic].getDrawable();
+		if (draw != null)
+			bitmaps[1] = ((BitmapDrawable) draw).getBitmap();
+		draw = mImgViews[prevPic].getDrawable();
+		if (draw != null)
+			bitmaps[2] = ((BitmapDrawable) draw).getBitmap();
+		return bitmaps;
+	}
+
 	public boolean onCreateOptionsMenu(Menu menu) {
 		// TODO Auto-generated method stub
 		boolean result = super.onCreateOptionsMenu(menu);
@@ -408,7 +480,8 @@ public class ShowPics extends Activity implements OnGestureListener {
 				try {
 					savePicture(new File(Uri.parse(dirname).getEncodedPath()));
 				} catch (IOException e) {
-					Log.e(this.getClass().getName(), "onActivityResult() exception", e);
+					Log.e(this.getClass().getName(),
+							"onActivityResult() exception", e);
 					Toast.makeText(this, e.getLocalizedMessage(),
 							Toast.LENGTH_SHORT).show();
 				}
@@ -486,5 +559,30 @@ public class ShowPics extends Activity implements OnGestureListener {
 
 		return uri;
 	}
+
+	private Animation.AnimationListener animListener = new Animation.AnimationListener() {
+		@Override
+		public void onAnimationEnd(Animation animation) {
+			mFlipper.postDelayed(new Runnable() {
+
+				@Override
+				public void run() {
+					resetViews();
+					mIsFlipping = false;
+				}
+			}, 10);
+		}
+
+		@Override
+		public void onAnimationRepeat(Animation animation) {
+			// TODO Auto-generated method stub
+
+		}
+
+		@Override
+		public void onAnimationStart(Animation animation) {
+			// TODO Auto-generated method stub
+		}
+	};
 
 }
