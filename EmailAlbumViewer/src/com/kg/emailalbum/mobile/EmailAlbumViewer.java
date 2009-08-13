@@ -209,7 +209,7 @@ public class EmailAlbumViewer extends ListActivity {
 	}
 
 	private void alertOIFileManagerIsMissing() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
 		builder.setMessage(R.string.alert_filemanager_missing)
 		       .setCancelable(false)
 		       .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
