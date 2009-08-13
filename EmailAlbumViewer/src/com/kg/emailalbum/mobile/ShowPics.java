@@ -272,6 +272,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 				showPicture();
 			} else {
 				toastFirstOrLast();
+				mIsFlipping = false;
 			}
 		}
 	}
@@ -285,6 +286,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 				showPicture();
 			} else {
 				toastFirstOrLast();
+				mIsFlipping = false;
 			}
 		}
 	}
