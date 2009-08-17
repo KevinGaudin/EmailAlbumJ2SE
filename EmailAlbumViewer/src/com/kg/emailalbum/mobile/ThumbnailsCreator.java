@@ -1,6 +1,7 @@
 package com.kg.emailalbum.mobile;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import android.graphics.Bitmap.CompressFormat;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 public class ThumbnailsCreator extends Thread {
 	private static final String THUMBS_PREFIX = "thm_";
@@ -41,6 +43,7 @@ public class ThumbnailsCreator extends Thread {
 	@Override
 	public void run() {
 		if (mArchive == null) {
+			Log.e(this.getClass().getSimpleName(), "Archive is null");
 			sendError(new FileNotFoundException("Archive not found."));
 		} else {
 			try {
@@ -63,24 +66,30 @@ public class ThumbnailsCreator extends Thread {
 							+ entryName
 									.substring(entryName.lastIndexOf('/') + 1);
 					if (!files.contains(thumbName)) {
-						entryIS = mArchive.getInputStream(entry);
-						source = BitmapFactory.decodeStream(entryIS);
-						entryIS.close();
-						float ratio = (float) (source.getWidth())
-								/ (float) (source.getHeight());
-						int dstW, dstH;
-						dstW = 80;
-						dstH = (int) (dstW / ratio);
-						thumb = Bitmap.createScaledBitmap(source, dstW, dstH,
-								true);
+						entryIS = ZipUtil.getInputStream(mArchive, entry);
+						if (entryIS != null) {
+							source = BitmapFactory.decodeStream(entryIS);
+							entryIS.close();
+							float ratio = (float) (source.getWidth())
+									/ (float) (source.getHeight());
+							int dstW, dstH;
+							dstW = 80;
+							dstH = (int) (dstW / ratio);
+							thumb = Bitmap.createScaledBitmap(source, dstW,
+									dstH, true);
 
-						thumbOS = mContext.openFileOutput(thumbName,
-								Context.MODE_PRIVATE);
+							thumbOS = mContext.openFileOutput(thumbName,
+									Context.MODE_PRIVATE);
 
-						thumb.compress(CompressFormat.JPEG, 75, thumbOS);
-						thumbOS.close();
-						thumb.recycle();
-						source.recycle();
+							thumb.compress(CompressFormat.JPEG, 75, thumbOS);
+							thumbOS.close();
+							thumb.recycle();
+							source.recycle();
+
+						} else {
+							sendError(new IOException(
+									"This archive is corrupt or contains bad character encoding."));
+						}
 					}
 
 					mThumbnails.put(entryName, mContext.getFileStreamPath(
@@ -89,6 +98,8 @@ public class ThumbnailsCreator extends Thread {
 					pos++;
 				}
 			} catch (Exception e) {
+				Log.e(this.getClass().getSimpleName(),
+						"Error while creating thumbnail.", e);
 				sendError(e);
 			}
 		}
@@ -116,7 +127,7 @@ public class ThumbnailsCreator extends Thread {
 		Message msg = new Message();
 		Bundle data = new Bundle();
 		msg.arg1 = -1;
-		data.putString("EXCEPTION", e.getLocalizedMessage());
+		data.putString("EXCEPTION", e.getMessage());
 		msg.setData(data);
 		mHandler.sendMessage(msg);
 	}

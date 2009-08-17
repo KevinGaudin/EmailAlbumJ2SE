@@ -143,7 +143,10 @@ public class ShowPics extends Activity implements OnGestureListener {
 			for (ImageView view : mImgViews) {
 				Drawable toRecycle = view.getDrawable();
 				if (toRecycle != null) {
-					((BitmapDrawable) toRecycle).getBitmap().recycle();
+					Bitmap bmpToRecycle = ((BitmapDrawable) toRecycle).getBitmap();
+					if(bmpToRecycle != null) {
+						bmpToRecycle.recycle();
+					}
 				}
 			}
 		}
@@ -158,7 +161,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 				curPic = (curPic + 1) % 3;
 				nextPic = (nextPic + 1) % 3;
 				if (mPosition + 1 < mImageNames.size()) {
-					imageIS = archive.getInputStream(archive
+					imageIS = ZipUtil.getInputStream(archive, archive
 							.getEntry(mImageNames.get(mPosition + 1)));
 					if (mImgViews[nextPic].getDrawable() != null) {
 						((BitmapDrawable) mImgViews[nextPic].getDrawable())
@@ -174,7 +177,7 @@ public class ShowPics extends Activity implements OnGestureListener {
 				curPic = (curPic == 0) ? 2 : curPic - 1;
 				nextPic = (nextPic == 0) ? 2 : nextPic - 1;
 				if (mPosition - 1 >= 0) {
-					imageIS = archive.getInputStream(archive
+					imageIS = ZipUtil.getInputStream(archive, archive
 							.getEntry(mImageNames.get(mPosition - 1)));
 					if (mImgViews[prevPic].getDrawable() != null) {
 						((BitmapDrawable) mImgViews[prevPic].getDrawable())
@@ -204,21 +207,23 @@ public class ShowPics extends Activity implements OnGestureListener {
 					mImgViews[nextPic].setImageBitmap(bitmaps[1]);
 					mImgViews[prevPic].setImageBitmap(bitmaps[2]);
 				} else {
-
-					imageIS = archive.getInputStream(archive
+					Log.d(this.getClass().getName(), "Load image " + mImageNames.get(mPosition));
+					imageIS = ZipUtil.getInputStream(archive, archive
 							.getEntry(mImageNames.get(mPosition)));
 					mImgViews[curPic].setImageBitmap(BitmapFactory
 							.decodeStream(imageIS));
 					imageIS.close();
 					if (mPosition > 0) {
-						imageIS = archive.getInputStream(archive
+						Log.d(this.getClass().getName(), "Load image " + mImageNames.get(mPosition-1));
+						imageIS = ZipUtil.getInputStream(archive, archive
 								.getEntry(mImageNames.get(mPosition - 1)));
 						mImgViews[prevPic].setImageBitmap(BitmapFactory
 								.decodeStream(imageIS));
 						imageIS.close();
 					}
 					if (mPosition < mImageNames.size() - 1) {
-						imageIS = archive.getInputStream(archive
+						Log.d(this.getClass().getName(), "Load image " + mImageNames.get(mPosition+1));
+						imageIS = ZipUtil.getInputStream(archive, archive
 								.getEntry(mImageNames.get(mPosition + 1)));
 						mImgViews[nextPic].setImageBitmap(BitmapFactory
 								.decodeStream(imageIS));
@@ -534,14 +539,15 @@ public class ShowPics extends Activity implements OnGestureListener {
 				mImageNames.get(mPosition).lastIndexOf('/')).toLowerCase());
 
 		OutputStream destFileOS = new FileOutputStream(destFile);
-		InputStream imageIS = archive.getInputStream(archive
+		InputStream imageIS = ZipUtil.getInputStream(archive, archive
 				.getEntry(mImageNames.get(mPosition)));
-		byte[] buffer = new byte[200];
+		byte[] buffer = new byte[2048];
 		int len = 0;
 		while ((len = imageIS.read(buffer)) >= 0) {
 			destFileOS.write(buffer, 0, len);
 		}
 		destFileOS.close();
+		imageIS.close();
 		return destFile;
 	}
 

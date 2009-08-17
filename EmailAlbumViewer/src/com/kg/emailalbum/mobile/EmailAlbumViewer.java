@@ -156,10 +156,10 @@ public class EmailAlbumViewer extends ListActivity {
 		super.onCreate(savedInstanceState);
 
 		context = this;
-		// if (getIntent() != null) {
-		// Toast.makeText(this, "Intent action : " + getIntent().getAction(),
-		// Toast.LENGTH_SHORT).show();
-		// }
+//		 if (getIntent() != null) {
+//			Toast.makeText(this, "Intent action : " + getIntent().getAction(),
+//					 Toast.LENGTH_SHORT).show();
+//		 }
 
 		if (savedInstanceState != null) {
 			if (savedInstanceState.getString("albumFileUri") != null) {
@@ -226,11 +226,24 @@ public class EmailAlbumViewer extends ListActivity {
 		alert.show();
 	}
 
+
+
 	protected void getOIFileManager() {
 		Intent i = new Intent(Intent.ACTION_VIEW,Uri.parse("market://search?q=pname:org.openintents.filemanager"));
 		startActivity(i);
 	}
 
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onPause()
+	 */
+	@Override
+	protected void onPause() {
+		super.onPause();
+		if(mThmbCreator != null && mThmbCreator.isAlive()) {
+			mThmbCreator.stopCreation();
+		}
+	}
+	
 	/*
 	 * (non-Javadoc)
 	 * 
