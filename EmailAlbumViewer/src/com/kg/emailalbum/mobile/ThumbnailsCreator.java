@@ -89,6 +89,7 @@ public class ThumbnailsCreator extends Thread {
 						} else {
 							sendError(new IOException(
 									"This archive is corrupt or contains bad character encoding."));
+							stopCreation();
 						}
 					}
 
