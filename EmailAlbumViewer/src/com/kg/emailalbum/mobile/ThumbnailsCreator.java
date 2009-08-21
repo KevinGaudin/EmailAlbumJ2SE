@@ -20,6 +20,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
 
 public class ThumbnailsCreator extends Thread {
 	private static final String THUMBS_PREFIX = "thm_";
@@ -102,6 +103,9 @@ public class ThumbnailsCreator extends Thread {
 				Log.e(this.getClass().getSimpleName(),
 						"Error while creating thumbnail.", e);
 				sendError(e);
+			} catch (OutOfMemoryError e) {
+				Log.e(this.getClass().getSimpleName(), "mem error", e);
+				sendError(e);
 			}
 		}
 	}
@@ -124,11 +128,12 @@ public class ThumbnailsCreator extends Thread {
 		mHandler.sendMessage(msg);
 	}
 
-	private void sendError(Exception e) {
+	private void sendError(Throwable e) {
 		Message msg = new Message();
 		Bundle data = new Bundle();
 		msg.arg1 = -1;
 		data.putString("EXCEPTION", e.getMessage());
+		data.putString("EXCEPTION_CLASS", e.getClass().getSimpleName());
 		msg.setData(data);
 		mHandler.sendMessage(msg);
 	}

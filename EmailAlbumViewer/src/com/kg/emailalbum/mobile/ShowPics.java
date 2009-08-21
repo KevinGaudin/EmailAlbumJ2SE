@@ -67,6 +67,8 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private Animation mAnimPushRightOut;
 	private Animation mAnimPushRightIn;
 	private boolean mIsFlipping = false;
+	// Not Enough Memory Mode
+	private boolean mNEMMode = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -143,8 +145,9 @@ public class ShowPics extends Activity implements OnGestureListener {
 			for (ImageView view : mImgViews) {
 				Drawable toRecycle = view.getDrawable();
 				if (toRecycle != null) {
-					Bitmap bmpToRecycle = ((BitmapDrawable) toRecycle).getBitmap();
-					if(bmpToRecycle != null) {
+					Bitmap bmpToRecycle = ((BitmapDrawable) toRecycle)
+							.getBitmap();
+					if (bmpToRecycle != null) {
 						bmpToRecycle.recycle();
 					}
 				}
@@ -192,14 +195,17 @@ public class ShowPics extends Activity implements OnGestureListener {
 			Log.e(this.getClass().getName(), "ResetViews() exception", e);
 			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT)
 					.show();
+		} catch (OutOfMemoryError e) {
+			Log.e(this.getClass().getName(), "showPicture() error", e);
+			Toast.makeText(this, R.string.error_out_of_mem, Toast.LENGTH_SHORT)
+					.show();
 		}
 	}
 
 	private void showPicture() {
 		try {
-			InputStream imageIS;
-			if (mOldPosition == -1) {
-				// First load, initialize from archive
+			if (mOldPosition == -1 || mNEMMode) {
+				// First load, initialize all ImageViews from archive
 				Object data = getLastNonConfigurationInstance();
 				if (data != null) {
 					Bitmap[] bitmaps = (Bitmap[]) data;
@@ -207,27 +213,29 @@ public class ShowPics extends Activity implements OnGestureListener {
 					mImgViews[nextPic].setImageBitmap(bitmaps[1]);
 					mImgViews[prevPic].setImageBitmap(bitmaps[2]);
 				} else {
-					Log.d(this.getClass().getName(), "Load image " + mImageNames.get(mPosition));
-					imageIS = ZipUtil.getInputStream(archive, archive
-							.getEntry(mImageNames.get(mPosition)));
-					mImgViews[curPic].setImageBitmap(BitmapFactory
-							.decodeStream(imageIS));
-					imageIS.close();
-					if (mPosition > 0) {
-						Log.d(this.getClass().getName(), "Load image " + mImageNames.get(mPosition-1));
-						imageIS = ZipUtil.getInputStream(archive, archive
-								.getEntry(mImageNames.get(mPosition - 1)));
-						mImgViews[prevPic].setImageBitmap(BitmapFactory
-								.decodeStream(imageIS));
-						imageIS.close();
+					// Load first picture
+					if(mImgViews[curPic].getDrawable() != null){
+						mImgViews[curPic].getDrawable().setCallback(null);
+						Bitmap toRecycle = ((BitmapDrawable)mImgViews[curPic].getDrawable()).getBitmap();
+						if(toRecycle != null) {
+							toRecycle.recycle();
+						}
 					}
-					if (mPosition < mImageNames.size() - 1) {
-						Log.d(this.getClass().getName(), "Load image " + mImageNames.get(mPosition+1));
-						imageIS = ZipUtil.getInputStream(archive, archive
-								.getEntry(mImageNames.get(mPosition + 1)));
-						mImgViews[nextPic].setImageBitmap(BitmapFactory
-								.decodeStream(imageIS));
-						imageIS.close();
+					mImgViews[curPic].setImageBitmap(loadPicture(mPosition));
+
+					// If memory is not a problem, preload pictures
+					if (!mNEMMode) {
+						// Load previous picture
+						if (mPosition > 0) {
+							mImgViews[prevPic]
+									.setImageBitmap(loadPicture(mPosition - 1));
+						}
+
+						// Load next picture
+						if (mPosition < mImageNames.size() - 1) {
+							mImgViews[nextPic]
+									.setImageBitmap(loadPicture(mPosition + 1));
+						}
 					}
 				}
 			} else if (mOldPosition < mPosition) {
@@ -241,7 +249,30 @@ public class ShowPics extends Activity implements OnGestureListener {
 			Log.e(this.getClass().getName(), "showPicture() exception", e);
 			Toast.makeText(this, e.getLocalizedMessage(), Toast.LENGTH_SHORT)
 					.show();
+		} catch (OutOfMemoryError e) {
+			Log.e(this.getClass().getName(), "showPicture() error", e);
+			Toast.makeText(this, R.string.error_out_of_mem, Toast.LENGTH_SHORT)
+					.show();
+			if (!mNEMMode
+					&& ((BitmapDrawable) mImgViews[curPic].getDrawable())
+							.getBitmap() != null) {
+				mNEMMode = true;
+				Toast.makeText(this, R.string.enter_nemmode, Toast.LENGTH_SHORT).show();
+			} else {
+				finish();
+			}
 		}
+	}
+
+	private Bitmap loadPicture(int position) throws IOException {
+		InputStream imageIS;
+		Log.d(this.getClass().getName(), "Load image "
+				+ mImageNames.get(mPosition));
+		imageIS = ZipUtil.getInputStream(archive, archive.getEntry(mImageNames
+				.get(position)));
+		Bitmap result = BitmapFactory.decodeStream(imageIS);
+		imageIS.close();
+		return result;
 	}
 
 	private void applyTransition(int direction) {
@@ -600,25 +631,27 @@ public class ShowPics extends Activity implements OnGestureListener {
 	};
 
 	private void alertOIFileManagerIsMissing() {
-		AlertDialog.Builder builder = new AlertDialog.Builder(getApplicationContext());
-		builder.setMessage(R.string.alert_filemanager_missing)
-		       .setCancelable(false)
-		       .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-		           public void onClick(DialogInterface dialog, int id) {
-		                getOIFileManager();
-		           }
-		       })
-		       .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-		           public void onClick(DialogInterface dialog, int id) {
-		                dialog.cancel();
-		           }
-		       });
+		AlertDialog.Builder builder = new AlertDialog.Builder(
+				getApplicationContext());
+		builder.setMessage(R.string.alert_filemanager_missing).setCancelable(
+				false).setPositiveButton(android.R.string.yes,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						getOIFileManager();
+					}
+				}).setNegativeButton(android.R.string.no,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						dialog.cancel();
+					}
+				});
 		AlertDialog alert = builder.create();
 		alert.show();
 	}
 
 	protected void getOIFileManager() {
-		Intent i = new Intent(Intent.ACTION_VIEW,Uri.parse("market://search?q=pname:org.openintents.filemanager"));
+		Intent i = new Intent(Intent.ACTION_VIEW, Uri
+				.parse("market://search?q=pname:org.openintents.filemanager"));
 		startActivity(i);
 	}
 }
