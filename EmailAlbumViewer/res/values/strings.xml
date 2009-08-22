@@ -18,10 +18,15 @@
 	<string name="menu_load_album">View another album</string>
 	<string name="menu_share">Share</string>
 	<string name="chooser_share">Open with...</string>
-	<string name="menu_save">Save this image</string>
+	<string name="menu_save">Save...</string>
+	<string name="menu_save_selected">Save selected picture</string>
+	<string name="menu_save_all">Save all pictures</string>
 	<string name="menu_about">About EmailAlbum Viewer</string>
 	<string name="error_other_intents">Error while building other intents menu.
 	</string>
+	<string name="error_out_of_mem">Image files are too large to be displayed !</string>
+	<string name="error_saving">An error occurred while saving.</string>
+	<string name="enter_nemmode">Let's try to display them one by one...</string>
 	<string name="about_go_web">Donate via PayPal</string>
 	<string name="about_text">
 		This viewer is brought to you by the author of

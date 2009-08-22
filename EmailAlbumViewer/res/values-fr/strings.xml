@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-
 	<string name="app_name">EmailAlbum Viewer</string>
 	<string name="no_file">Aucun album sélectionné.</string>
-	<string name="open_archive_error">Une erreur est survenue à l\'ouverture du fichier
+	<string name="open_archive_error">Une erreur est survenue à l\'ouverture du
+		fichier
 		:</string>
 	<string name="first_pic">Ceci est la première image.</string>
 	<string name="last_pic">Ceci est la dernière image.</string>
@@ -20,18 +19,31 @@
 	<string name="menu_load_album">Voir un autre album</string>
 	<string name="menu_share">Partager</string>
 	<string name="chooser_share">Ouvrir avec...</string>
-	<string name="menu_save">Enregistrer</string>
+	<string name="menu_save">Enregistrer...</string>
+	<string name="menu_save_selected">Enregistrer cette image</string>
+	<string name="menu_save_all">Enregistrer toutes</string>
 	<string name="menu_about">A propos...</string>
 	<string name="error_other_intents">Erreur à la création du menu alternatif
 	</string>
+	<string name="error_out_of_mem">Les images sont trop lourdes pour être affichées
+		!</string>
+	<string name="error_saving">Erreur lors de la sauvegarde.</string>
+	<string name="enter_nemmode">Essayons une par une...
+	</string>
 	<string name="about_go_web">Faire un don avec PayPal</string>
 	<string name="about_text">
-		Cette visionneuse a été créée par l\'auteur d\'EmailAlbum.\n\n
-		Elle a été développée initialement pour permettre aux utilisateurs d\'EmailAlbum
-		de visualiser leurs albums sous Android, mais elle peut également ouvrir toute
-		archive ZIP contenant des images.\n\n
-		EmailAlbum est un logiciel opensource multi plateformes permettant de regrouper
-		un ensemble d\'images lourdes dans une archive auto-exécutable multi plateformes
+		Cette visionneuse a été créée par l\'auteur
+		d\'EmailAlbum.\n\n
+		Elle a été développée initialement pour permettre
+		aux utilisateurs d\'EmailAlbum
+		de visualiser leurs albums sous Android,
+		mais elle peut également ouvrir toute
+		archive ZIP contenant des
+		images.\n\n
+		EmailAlbum est un logiciel opensource multi plateformes
+		permettant de regrouper
+		un ensemble d\'images lourdes dans une archive
+		auto-exécutable multi plateformes
 		afin de l\'envoyer par mail.\n\n
 		Visitez http://emailalbum.googlecode.com pour plus de détails.
 	</string>

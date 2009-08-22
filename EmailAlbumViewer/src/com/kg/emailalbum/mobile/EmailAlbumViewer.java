@@ -17,6 +17,7 @@
 package com.kg.emailalbum.mobile;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,10 +44,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
+import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -54,10 +60,18 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 public class EmailAlbumViewer extends ListActivity {
-	private static final int LOAD_ALBUM_ID = Menu.FIRST;
-	private static final int ABOUT_ID = LOAD_ALBUM_ID + 1;
+
+	// Options menu items
+	private static final int LOAD_ALBUM_ID = 1;
+	private static final int SAVE_ALL_ID = 2;
+	private static final int ABOUT_ID = 3;
+
+	// Context menu items
+	private static final int SAVE_SELECTED_ID = 4;
 
 	private static final int ACTIVITY_PICK_FILE = 1;
+	private static final int ACTIVITY_PICK_DIRECTORY_TO_SAVE_ALL = 2;
+	private static final int ACTIVITY_PICK_DIRECTORY_TO_SAVE_SELECTED = 3;
 	private ArrayList<Map<String, String>> mContentModel;
 	private Uri mAlbumFileUri = null;
 	private ZipFile mArchive = null;
@@ -118,7 +132,7 @@ public class EmailAlbumViewer extends ListActivity {
 			super.handleMessage(msg);
 			mProgress.dismiss();
 			if (msg.arg1 < 0) {
-				Toast.makeText(context, msg.getData().getShort("EXCEPTION"),
+				Toast.makeText(context, R.string.error_saving,
 						Toast.LENGTH_SHORT).show();
 			}
 			fillData(true);
@@ -136,30 +150,61 @@ public class EmailAlbumViewer extends ListActivity {
 		public void handleMessage(Message msg) {
 			super.handleMessage(msg);
 			if (msg.arg1 < 0) {
-				Toast.makeText(context, msg.getData().getString("EXCEPTION"),
-						Toast.LENGTH_SHORT).show();
+				if (msg.getData().getString("EXCEPTION_CLASS").equals(
+						OutOfMemoryError.class.getSimpleName())) {
+					Toast.makeText(context, R.string.error_out_of_mem,
+							Toast.LENGTH_SHORT).show();
+				} else {
+					Toast.makeText(context,
+							msg.getData().getString("EXCEPTION"),
+							Toast.LENGTH_SHORT).show();
+				}
 			} else {
 				int position = msg.getData().getInt(
 						KEY_THMBCREAT_ENTRY_POSITION);
 				String thumbName = msg.getData().getString(
 						KEY_THMBCREAT_THUMB_NAME);
+				setProgress((position+1) * 10000 / mContentModel.size());
 				mAdapter.updateThumbnail(position, thumbName);
 			}
 		}
 
 	};
+	private Handler saveAllHandler = new Handler() {
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see android.os.Handler#handleMessage(android.os.Message)
+		 */
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			if (msg.arg1 < 0) {
+				Toast.makeText(context, msg.getData().getShort("EXCEPTION"),
+						Toast.LENGTH_SHORT).show();
+				setProgressBarVisibility(false);
+			} else {
+				int position = msg.what;
+				setProgress((position + 1) * 10000 / mContentModel.size());
+			}
+		}
+
+	};
+
 	private ThumbnailsCreator mThmbCreator;
+	private int posPictureToSave;
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
+		requestWindowFeature(Window.FEATURE_PROGRESS);
 		context = this;
-//		 if (getIntent() != null) {
-//			Toast.makeText(this, "Intent action : " + getIntent().getAction(),
-//					 Toast.LENGTH_SHORT).show();
-//		 }
+		// if (getIntent() != null) {
+		// Toast.makeText(this, "Intent action : " + getIntent().getAction(),
+		// Toast.LENGTH_SHORT).show();
+		// }
 
 		if (savedInstanceState != null) {
 			if (savedInstanceState.getString("albumFileUri") != null) {
@@ -210,40 +255,41 @@ public class EmailAlbumViewer extends ListActivity {
 
 	private void alertOIFileManagerIsMissing() {
 		AlertDialog.Builder builder = new AlertDialog.Builder(this);
-		builder.setMessage(R.string.alert_filemanager_missing)
-		       .setCancelable(false)
-		       .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
-		           public void onClick(DialogInterface dialog, int id) {
-		                getOIFileManager();
-		           }
-		       })
-		       .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
-		           public void onClick(DialogInterface dialog, int id) {
-		                dialog.cancel();
-		           }
-		       });
+		builder.setMessage(R.string.alert_filemanager_missing).setCancelable(
+				false).setPositiveButton(android.R.string.yes,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						getOIFileManager();
+					}
+				}).setNegativeButton(android.R.string.no,
+				new DialogInterface.OnClickListener() {
+					public void onClick(DialogInterface dialog, int id) {
+						dialog.cancel();
+					}
+				});
 		AlertDialog alert = builder.create();
 		alert.show();
 	}
 
-
-
 	protected void getOIFileManager() {
-		Intent i = new Intent(Intent.ACTION_VIEW,Uri.parse("market://search?q=pname:org.openintents.filemanager"));
+		Intent i = new Intent(Intent.ACTION_VIEW, Uri
+				.parse("market://search?q=pname:org.openintents.filemanager"));
 		startActivity(i);
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see android.app.Activity#onPause()
 	 */
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if(mThmbCreator != null && mThmbCreator.isAlive()) {
+		if (mThmbCreator != null && mThmbCreator.isAlive()) {
 			mThmbCreator.stopCreation();
 		}
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -328,6 +374,9 @@ public class EmailAlbumViewer extends ListActivity {
 					}
 					mAdapter = new PhotoAdapter();
 					setListAdapter(mAdapter);
+					registerForContextMenu(getListView());
+					getListView().setSelection(
+							getListView().getFirstVisiblePosition());
 				} catch (Exception e) {
 					Toast.makeText(this, e.getLocalizedMessage(),
 							Toast.LENGTH_SHORT).show();
@@ -335,6 +384,7 @@ public class EmailAlbumViewer extends ListActivity {
 			}
 		}
 		if (mContentModel != null) {
+			setProgressBarVisibility(true);
 			startThumbnailsCreation(clearThumbnails);
 		}
 	}
@@ -345,6 +395,8 @@ public class EmailAlbumViewer extends ListActivity {
 		boolean result = super.onCreateOptionsMenu(menu);
 		MenuItem item = menu.add(0, LOAD_ALBUM_ID, 0, R.string.menu_load_album);
 		item.setIcon(android.R.drawable.ic_menu_gallery);
+		item = menu.add(0, SAVE_ALL_ID, 0, R.string.menu_save_all);
+		item.setIcon(android.R.drawable.ic_menu_save);
 		item = menu.add(0, ABOUT_ID, 0, R.string.menu_about);
 		item.setIcon(android.R.drawable.ic_menu_help);
 		return result;
@@ -352,10 +404,12 @@ public class EmailAlbumViewer extends ListActivity {
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
-		// TODO Auto-generated method stub
 		switch (item.getItemId()) {
 		case LOAD_ALBUM_ID:
 			openAlbum();
+			return true;
+		case SAVE_ALL_ID:
+			pickDirectory(ACTIVITY_PICK_DIRECTORY_TO_SAVE_ALL);
 			return true;
 		case ABOUT_ID:
 			Intent intent = new Intent(this, AboutDialog.class);
@@ -363,6 +417,54 @@ public class EmailAlbumViewer extends ListActivity {
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see android.app.Activity#onCreateContextMenu(android.view.ContextMenu,
+	 * android.view.View, android.view.ContextMenu.ContextMenuInfo)
+	 */
+	@Override
+	public void onCreateContextMenu(ContextMenu menu, View v,
+			ContextMenuInfo menuInfo) {
+		super.onCreateContextMenu(menu, v, menuInfo);
+		posPictureToSave = ((AdapterView.AdapterContextMenuInfo)menuInfo).position;
+		menu.setHeaderTitle(R.string.menu_save);
+		menu.add(0, SAVE_SELECTED_ID, 0, R.string.menu_save_selected);
+		menu.add(0, SAVE_ALL_ID, 0, R.string.menu_save_all);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see android.app.Activity#onContextItemSelected(android.view.MenuItem)
+	 */
+	@Override
+	public boolean onContextItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case SAVE_ALL_ID:
+			pickDirectory(ACTIVITY_PICK_DIRECTORY_TO_SAVE_ALL);
+			return true;
+		case SAVE_SELECTED_ID:
+			pickDirectory(ACTIVITY_PICK_DIRECTORY_TO_SAVE_SELECTED);
+			return true;
+		}
+		return super.onContextItemSelected(item);
+	}
+
+	private void pickDirectory(int requestCode) {
+		Intent intent = new Intent("org.openintents.action.PICK_DIRECTORY");
+		intent.setData(Uri.parse("file:///sdcard"));
+		intent.putExtra("org.openintents.extra.TITLE",
+				getText(R.string.select_directory));
+		intent.putExtra("org.openintents.extra.BUTTON_TEXT",
+				getText(R.string.btn_select_directory));
+		try {
+			startActivityForResult(intent, requestCode);
+		} catch (ActivityNotFoundException e) {
+			alertOIFileManagerIsMissing();
+		}
 	}
 
 	/*
@@ -385,7 +487,60 @@ public class EmailAlbumViewer extends ListActivity {
 				fillData(true);
 			}
 			break;
+		case ACTIVITY_PICK_DIRECTORY_TO_SAVE_SELECTED:
+		case ACTIVITY_PICK_DIRECTORY_TO_SAVE_ALL:
+			if (resultCode == RESULT_OK && data != null) {
+				// obtain the filename
+				String dirname = data.getDataString();
+				try {
+					if (requestCode == ACTIVITY_PICK_DIRECTORY_TO_SAVE_SELECTED) {
+						savePicture(posPictureToSave,
+								new File(Uri.parse(dirname).getEncodedPath()));
+					} else {
+						saveAllPictures(new File(Uri.parse(dirname)
+								.getEncodedPath()));
+					}
+				} catch (IOException e) {
+					Log.e(this.getClass().getName(),
+							"onActivityResult() exception", e);
+					Toast.makeText(this, e.getLocalizedMessage(),
+							Toast.LENGTH_SHORT).show();
+				}
+
+			}
+			break;
 		}
+	}
+
+	private void saveAllPictures(final File file) throws IOException {
+		setProgress(0);
+		setProgressBarVisibility(true);
+		new Thread() {
+
+			/* (non-Javadoc)
+			 * @see java.lang.Thread#run()
+			 */
+			@Override
+			public void run() {
+				for(int i = 0; i < mContentModel.size(); i++) {
+					try {
+						savePicture(i, file);
+						saveAllHandler.sendEmptyMessage(i);
+					} catch (FileNotFoundException e) {
+						Log.e(this.getClass().getSimpleName(), "Error while saving pictures", e);
+						Message msg = new Message();
+						Bundle data = new Bundle();
+						msg.arg1 = -1;
+						data.putString("EXCEPTION", e.getMessage());
+						msg.setData(data);
+						saveAllHandler.sendMessage(msg);					} catch (IOException e) {
+					}
+				}
+			}
+			
+			
+		}.start();
+
 	}
 
 	@Override
@@ -477,5 +632,24 @@ public class EmailAlbumViewer extends ListActivity {
 			notifyDataSetChanged();
 		}
 
+	}
+
+	private File savePicture(int position, File destDir)
+			throws FileNotFoundException, IOException {
+		File destFile;
+		Map<String, String> imgModel = mContentModel.get(position);
+		destFile = new File(destDir, imgModel.get(KEY_SHORTNAME).toLowerCase());
+
+		OutputStream destFileOS = new FileOutputStream(destFile);
+		InputStream imageIS = ZipUtil.getInputStream(mArchive, mArchive
+				.getEntry(imgModel.get(KEY_FULLNAME)));
+		byte[] buffer = new byte[2048];
+		int len = 0;
+		while ((len = imageIS.read(buffer)) >= 0) {
+			destFileOS.write(buffer, 0, len);
+		}
+		destFileOS.close();
+		imageIS.close();
+		return destFile;
 	}
 }
