@@ -55,9 +55,7 @@ public class ThumbnailsCreator extends Thread {
 				Iterator<String> iPictures = mPictures.iterator();
 				int pos = 0;
 				List<String> files = Arrays.asList(mContext.fileList());
-				Bitmap source = null;
 				Bitmap thumb = null;
-				InputStream entryIS = null;
 				OutputStream thumbOS = null;
 				while (mContinueCreation && iPictures.hasNext()) {
 					entryName = iPictures.next();
@@ -66,26 +64,17 @@ public class ThumbnailsCreator extends Thread {
 							+ entryName
 									.substring(entryName.lastIndexOf('/') + 1);
 					if (!files.contains(thumbName)) {
-						entryIS = ZipUtil.getInputStream(mArchive, entry);
-						if (entryIS != null) {
-							source = BitmapFactory.decodeStream(entryIS);
-							entryIS.close();
-							float ratio = (float) (source.getWidth())
-									/ (float) (source.getHeight());
-							int dstW, dstH;
-							dstW = 80;
-							dstH = (int) (dstW / ratio);
-							thumb = Bitmap.createScaledBitmap(source, dstW,
-									dstH, true);
 
+						thumb = BitmapLoader.load(mContext, mArchive, entry,
+								80, null);
+
+						if (thumb != null) {
 							thumbOS = mContext.openFileOutput(thumbName,
 									Context.MODE_PRIVATE);
 
 							thumb.compress(CompressFormat.JPEG, 75, thumbOS);
 							thumbOS.close();
 							thumb.recycle();
-							source.recycle();
-
 						} else {
 							sendError(new IOException(
 									"This archive is corrupt or contains bad character encoding."));
