@@ -405,6 +405,21 @@ public class EmailAlbumViewer extends ListActivity {
 		item.setIcon(android.R.drawable.ic_menu_help);
 		return result;
 	}
+	
+	
+
+	/* (non-Javadoc)
+	 * @see android.app.Activity#onPrepareOptionsMenu(android.view.Menu)
+	 */
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		if(mContentModel == null) {
+			menu.findItem(SAVE_ALL_ID).setEnabled(false);
+		} else {
+			menu.findItem(SAVE_ALL_ID).setEnabled(true);
+		}
+		return super.onPrepareOptionsMenu(menu);
+	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
