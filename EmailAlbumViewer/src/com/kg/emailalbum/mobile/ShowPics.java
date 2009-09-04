@@ -18,7 +18,6 @@ import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -157,22 +156,18 @@ public class ShowPics extends Activity implements OnGestureListener {
 
 	private void resetViews() {
 		try {
-			InputStream imageIS;
 			if (mOldPosition < mPosition) {
 				// Gone forward
 				prevPic = (prevPic + 1) % 3;
 				curPic = (curPic + 1) % 3;
 				nextPic = (nextPic + 1) % 3;
 				if (mPosition + 1 < mImageNames.size()) {
-					imageIS = ZipUtil.getInputStream(archive, archive
-							.getEntry(mImageNames.get(mPosition + 1)));
 					if (mImgViews[nextPic].getDrawable() != null) {
 						((BitmapDrawable) mImgViews[nextPic].getDrawable())
 								.getBitmap().recycle();
 					}
-					mImgViews[nextPic].setImageBitmap(BitmapFactory
-							.decodeStream(imageIS));
-					imageIS.close();
+
+					mImgViews[nextPic].setImageBitmap(loadPicture(mPosition + 1));
 				}
 			} else if (mOldPosition > mPosition) {
 				// Gone backward
@@ -180,15 +175,12 @@ public class ShowPics extends Activity implements OnGestureListener {
 				curPic = (curPic == 0) ? 2 : curPic - 1;
 				nextPic = (nextPic == 0) ? 2 : nextPic - 1;
 				if (mPosition - 1 >= 0) {
-					imageIS = ZipUtil.getInputStream(archive, archive
-							.getEntry(mImageNames.get(mPosition - 1)));
 					if (mImgViews[prevPic].getDrawable() != null) {
 						((BitmapDrawable) mImgViews[prevPic].getDrawable())
 								.getBitmap().recycle();
 					}
-					mImgViews[prevPic].setImageBitmap(BitmapFactory
-							.decodeStream(imageIS));
-					imageIS.close();
+					
+					mImgViews[prevPic].setImageBitmap(loadPicture(mPosition - 1));
 				}
 			}
 		} catch (Exception e) {
@@ -214,10 +206,11 @@ public class ShowPics extends Activity implements OnGestureListener {
 					mImgViews[prevPic].setImageBitmap(bitmaps[2]);
 				} else {
 					// Load first picture
-					if(mImgViews[curPic].getDrawable() != null){
+					if (mImgViews[curPic].getDrawable() != null) {
 						mImgViews[curPic].getDrawable().setCallback(null);
-						Bitmap toRecycle = ((BitmapDrawable)mImgViews[curPic].getDrawable()).getBitmap();
-						if(toRecycle != null) {
+						Bitmap toRecycle = ((BitmapDrawable) mImgViews[curPic]
+								.getDrawable()).getBitmap();
+						if (toRecycle != null) {
 							toRecycle.recycle();
 						}
 					}
@@ -257,7 +250,9 @@ public class ShowPics extends Activity implements OnGestureListener {
 					&& ((BitmapDrawable) mImgViews[curPic].getDrawable())
 							.getBitmap() != null) {
 				mNEMMode = true;
-				Toast.makeText(this, R.string.enter_nemmode, Toast.LENGTH_SHORT).show();
+				Toast
+						.makeText(this, R.string.enter_nemmode,
+								Toast.LENGTH_SHORT).show();
 			} else {
 				finish();
 			}
@@ -265,13 +260,10 @@ public class ShowPics extends Activity implements OnGestureListener {
 	}
 
 	private Bitmap loadPicture(int position) throws IOException {
-		InputStream imageIS;
 		Log.d(this.getClass().getName(), "Load image "
 				+ mImageNames.get(mPosition));
-		imageIS = ZipUtil.getInputStream(archive, archive.getEntry(mImageNames
-				.get(position)));
-		Bitmap result = BitmapFactory.decodeStream(imageIS);
-		imageIS.close();
+		Bitmap result = BitmapLoader.load(getApplicationContext(), archive, archive.getEntry(mImageNames
+				.get(position)), null, null);
 		return result;
 	}
 

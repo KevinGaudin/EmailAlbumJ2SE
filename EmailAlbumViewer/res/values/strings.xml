@@ -3,7 +3,25 @@
 
 	<string name="hello">Hello World!</string>
 	<string name="app_name">EmailAlbum Viewer</string>
-	<string name="no_file">No file selected</string>
+	<string name="no_file">Welcome to EmailAlbum Viewer.\n
+	\n
+	The main purpose of this application is to present you a slideshow from archive
+	files containing pictures that you might receive in your Gmail Inbox.\n
+	\n
+	So, most of the time, you don\'t have to launch this app, Gmail will open it
+	himself when you ask him to view a .zip or a .jar archive that you received
+	attached in an e-mail.\n
+	\n
+	You might still want to launch EmailAlbum alone if you want to browse files
+	located on your device filesystem (sdcard). If this is what you want to do now, you just
+	have to hit the Menu button and select \'Open an album\'.\n
+	\n
+	* This app was first developed to allow users of EmailAlbum to view their
+	slideshows on Android devices.
+	EmailAlbum is an opensource ultra-light de slideshow generator. These slideshows are compact
+	enough to be sent by mail and can be run on any computer with Java SE installed (Windows, Mac, Linux...).\n
+	 http://emailalbum.googlecode.com.
+	</string>
 	<string name="open_archive_error">An error occured while opening file : </string>
 	<string name="first_pic">This is the first picture</string>
 	<string name="last_pic">This is the last picture</string>
@@ -15,7 +33,7 @@
 	<string name="select_directory">Please select destination folder...</string>
 	<string name="btn_select_directory">Put it here !</string>
 	<string name="menu_set_as">Set as...</string>
-	<string name="menu_load_album">View another album</string>
+	<string name="menu_load_album">Open an album</string>
 	<string name="menu_share">Share</string>
 	<string name="chooser_share">Open with...</string>
 	<string name="menu_save">Save...</string>

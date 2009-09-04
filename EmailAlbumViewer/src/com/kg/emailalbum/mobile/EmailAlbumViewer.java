@@ -200,6 +200,10 @@ public class EmailAlbumViewer extends ListActivity {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		requestWindowFeature(Window.FEATURE_PROGRESS);
+		setContentView(R.layout.content_list);
+		mAdapter = new PhotoAdapter();
+		setListAdapter(mAdapter);
+		
 		context = this;
 		// if (getIntent() != null) {
 		// Toast.makeText(this, "Intent action : " + getIntent().getAction(),
@@ -233,7 +237,9 @@ public class EmailAlbumViewer extends ListActivity {
 		}
 
 		if (mAlbumFileUri == null) {
-			openAlbum();
+			
+			//openAlbum();
+			
 
 		}
 
@@ -372,8 +378,6 @@ public class EmailAlbumViewer extends ListActivity {
 							mContentModel.add(contentLine);
 						}
 					}
-					mAdapter = new PhotoAdapter();
-					setListAdapter(mAdapter);
 					registerForContextMenu(getListView());
 					getListView().setSelection(
 							getListView().getFirstVisiblePosition());
@@ -595,6 +599,7 @@ public class EmailAlbumViewer extends ListActivity {
 	public class PhotoAdapter extends BaseAdapter {
 
 		public int getCount() {
+			if(mContentModel == null) return 0; 
 			return mContentModel.size();
 		}
 
