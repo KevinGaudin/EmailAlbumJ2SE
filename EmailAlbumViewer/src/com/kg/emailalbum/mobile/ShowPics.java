@@ -512,15 +512,18 @@ public class ShowPics extends Activity implements OnGestureListener {
 				Uri fileUri = Uri.parse("file://" + saveTmpPicture(new File(
 						EmailAlbumViewer.TMP_DIR_NAME)).getAbsolutePath());
 				Log.d(this.getClass().getSimpleName(), "Open Uri : " + fileUri);
+				CharSequence title = null;
 				if(item.getItemId() == OPEN_WITH_ID) {
 					intent = new Intent(Intent.ACTION_VIEW);
+					title = getText(R.string.menu_open_with);
 				} else {
 					intent = new Intent(Intent.ACTION_EDIT);
+					title = getText(R.string.menu_edit);
 				}
 				Toast.makeText(getApplicationContext(), R.string.alert_different_viewer, Toast.LENGTH_LONG).show();
 				intent.setDataAndType(fileUri, "image/jpeg");
 				startActivity(Intent.createChooser(intent,
-						getText(R.string.menu_open_with)));
+						title));
 			} catch (IOException e) {
 				Log.e(this.getClass().getSimpleName(),
 						"Error while creating temp file", e);
