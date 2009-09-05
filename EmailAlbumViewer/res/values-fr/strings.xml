@@ -2,23 +2,25 @@
 <resources>
 	<string name="app_name">EmailAlbum Viewer</string>
 	<string name="no_file">
-	Cette application permet de présenter sous forme d\'un
-	diaporama les images contenues dans des archives que vous recevez dans votre boite Gmail.\n
-	\n
-	La plupart du temps, vous n\'aurez pas besoin de la lancer,
-	c\'est Gmail qui s\'en chargera lorsque vous lui demanderez un aperçu d\'une
-	archive .zip ou .jar* reçue en attachement d\'un e-mail.\n
-	\n
-	Vous pouvez cependant lancer cette application indépendamment si
-	vous souhaitez visualiser des archives contenues dans le système de fichiers
-	de votre appareil (la carte SD). Si tel est le cas, appuyez sur le
-	bouton Menu et \'Ouvrir un album\'.\n
-	\n
-	* Initialement, cette application a été développée pour visualiser
-	sous Android les fichiers générés parEmailAlbum.
-	EmailAlbum est un créateur opensource ultra-léger de slideshows s\'exécutant
-	sur tout ordinateur équipé de Java SE(Windows, Mac, Linux...).\n
-	http://emailalbum.googlecode.com
+		Cette application permet de présenter sous forme d\'un
+		diaporama les images contenues dans des archives que vous recevez dans votre
+		boite Gmail.\n
+		\n
+		La plupart du temps, vous n\'aurez pas besoin de la lancer,
+		c\'est Gmail qui s\'en chargera lorsque vous lui demanderez un aperçu d\'une
+		archive .zip ou .jar* reçue en attachement d\'un e-mail.\n
+		\n
+		Vous pouvez cependant lancer cette application indépendamment si
+		vous souhaitez visualiser des archives contenues dans le système de
+		fichiers
+		de votre appareil (la carte SD). Si tel est le cas, appuyez sur le
+		bouton Menu et \'Ouvrir un album\'.\n
+		\n
+		* Initialement, cette application a été développée pour visualiser
+		sous Android les fichiers générés parEmailAlbum.
+		EmailAlbum est un créateur opensource ultra-léger de slideshows s\'exécutant
+		sur tout ordinateur équipé de Java SE(Windows, Mac, Linux...).\n
+		http://emailalbum.googlecode.com
 	</string>
 	<string name="open_archive_error">Une erreur est survenue à l\'ouverture du
 		fichier :</string>
@@ -40,6 +42,8 @@
 	<string name="menu_save_selected">Enregistrer cette image</string>
 	<string name="menu_save_all">Enregistrer toutes</string>
 	<string name="menu_about">A propos...</string>
+	<string name="menu_open_with">Ouvrir avec...</string>
+	<string name="menu_edit">Editer</string>
 	<string name="error_other_intents">Erreur à la création du menu alternatif
 	</string>
 	<string name="error_out_of_mem">Les images sont trop lourdes pour être affichées
@@ -67,5 +71,5 @@
 	<string name="url_donate">
 		https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=DT9H5GSCL9U76&amp;lc=FR&amp;item_name=EmailAlbum%20Viewer&amp;currency_code=EUR&amp;bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted</string>
 <string name="alert_filemanager_missing">OI File Manager est nécessaire pour ouvrir des albums et enregistrer des images depuis/vers la SD Card. Voulez-vous l\'installer ? (C\'est gratuit)</string>
-
+<string name="alert_different_viewer">Ouverture de l\'image dans une autre application. Bouton Retour pour revenir à EmailAlbum Viewer</string>
 </resources>

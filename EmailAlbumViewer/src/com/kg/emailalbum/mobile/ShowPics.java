@@ -42,7 +42,9 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private final static int SET_AS_ID = 1;
 	private static final int SAVE_ID = 2;
 	private static final int SEND_ID = 3;
-	private static final int ABOUT_ID = 4;
+	private static final int OPEN_WITH_ID = 4;
+	private static final int EDIT_ID = 5;
+	private static final int ABOUT_ID = 6;
 
 	private static final int BACKWARD = -1;
 	private static final int FORWARD = 1;
@@ -167,7 +169,8 @@ public class ShowPics extends Activity implements OnGestureListener {
 								.getBitmap().recycle();
 					}
 
-					mImgViews[nextPic].setImageBitmap(loadPicture(mPosition + 1));
+					mImgViews[nextPic]
+							.setImageBitmap(loadPicture(mPosition + 1));
 				}
 			} else if (mOldPosition > mPosition) {
 				// Gone backward
@@ -179,8 +182,9 @@ public class ShowPics extends Activity implements OnGestureListener {
 						((BitmapDrawable) mImgViews[prevPic].getDrawable())
 								.getBitmap().recycle();
 					}
-					
-					mImgViews[prevPic].setImageBitmap(loadPicture(mPosition - 1));
+
+					mImgViews[prevPic]
+							.setImageBitmap(loadPicture(mPosition - 1));
 				}
 			}
 		} catch (Exception e) {
@@ -262,8 +266,8 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private Bitmap loadPicture(int position) throws IOException {
 		Log.d(this.getClass().getName(), "Load image "
 				+ mImageNames.get(mPosition));
-		Bitmap result = BitmapLoader.load(getApplicationContext(), archive, archive.getEntry(mImageNames
-				.get(position)), null, null);
+		Bitmap result = BitmapLoader.load(getApplicationContext(), archive,
+				archive.getEntry(mImageNames.get(position)), null, null);
 		return result;
 	}
 
@@ -440,6 +444,14 @@ public class ShowPics extends Activity implements OnGestureListener {
 		item.setIcon(android.R.drawable.ic_menu_share);
 		item = menu.add(0, SAVE_ID, 0, R.string.menu_save);
 		item.setIcon(android.R.drawable.ic_menu_save);
+		item = menu.add(0, OPEN_WITH_ID, 0, R.string.menu_open_with);
+		item.setIcon(android.R.drawable.ic_menu_view);
+		Intent intent = new Intent(Intent.ACTION_EDIT);
+		intent.setType("image/jpeg");
+		if(getPackageManager().resolveActivity(intent, 0) != null) {
+			item = menu.add(0, EDIT_ID, 0, R.string.menu_edit);
+			item.setIcon(android.R.drawable.ic_menu_edit);
+		}
 		item = menu.add(0, ABOUT_ID, 0, R.string.menu_about);
 		item.setIcon(android.R.drawable.ic_menu_help);
 		return result;
@@ -494,7 +506,29 @@ public class ShowPics extends Activity implements OnGestureListener {
 			intent = new Intent(this, AboutDialog.class);
 			startActivity(intent);
 			return true;
-
+		case OPEN_WITH_ID:
+		case EDIT_ID:
+			try {
+				Uri fileUri = Uri.parse("file://" + saveTmpPicture(new File(
+						EmailAlbumViewer.TMP_DIR_NAME)).getAbsolutePath());
+				Log.d(this.getClass().getSimpleName(), "Open Uri : " + fileUri);
+				if(item.getItemId() == OPEN_WITH_ID) {
+					intent = new Intent(Intent.ACTION_VIEW);
+				} else {
+					intent = new Intent(Intent.ACTION_EDIT);
+				}
+				Toast.makeText(getApplicationContext(), R.string.alert_different_viewer, Toast.LENGTH_LONG).show();
+				intent.setDataAndType(fileUri, "image/jpeg");
+				startActivity(Intent.createChooser(intent,
+						getText(R.string.menu_open_with)));
+			} catch (IOException e) {
+				Log.e(this.getClass().getSimpleName(),
+						"Error while creating temp file", e);
+				Toast.makeText(getApplicationContext(),
+						"Error while creating temp file.", Toast.LENGTH_LONG)
+						.show();
+			}
+			return true;
 		}
 		return super.onOptionsItemSelected(item);
 	}
@@ -558,8 +592,12 @@ public class ShowPics extends Activity implements OnGestureListener {
 	private File savePicture(File destDir) throws FileNotFoundException,
 			IOException {
 		File destFile;
-		destFile = new File(destDir, mImageNames.get(mPosition).substring(
-				mImageNames.get(mPosition).lastIndexOf('/')).toLowerCase());
+		String fileName = mImageNames.get(mPosition);
+		int trailSlashIndex = fileName.lastIndexOf('/');
+		if(trailSlashIndex >= 0) {
+			fileName = fileName.substring(trailSlashIndex);
+		}
+		destFile = new File(destDir, fileName.toLowerCase());
 
 		OutputStream destFileOS = new FileOutputStream(destFile);
 		InputStream imageIS = ZipUtil.getInputStream(archive, archive

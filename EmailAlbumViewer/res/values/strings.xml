@@ -40,6 +40,8 @@
 	<string name="menu_save_selected">Save selected picture</string>
 	<string name="menu_save_all">Save all pictures</string>
 	<string name="menu_about">About EmailAlbum Viewer</string>
+	<string name="menu_open_with">Open with...</string>
+	<string name="menu_edit">Edit</string>
 	<string name="error_other_intents">Error while building other intents menu.
 	</string>
 	<string name="error_out_of_mem">Image files are too large to be displayed !</string>
@@ -65,4 +67,5 @@
 	</string>
 	<string name="url_donate">https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=DT9H5GSCL9U76&amp;lc=EN&amp;item_name=EmailAlbum%20Viewer&amp;currency_code=EUR&amp;bn=PP-DonationsBF:btn_donateCC_LG.gif:NonHosted</string>
 <string name="alert_filemanager_missing">OI File Manager is required for both opening albums and saving pictures from/to SD Card. Do you want to install it ? (It is free)</string>
+<string name="alert_different_viewer">Opening image in a different viewer. Use Back button to return to EmailAlbum Viewer</string>
 </resources>
