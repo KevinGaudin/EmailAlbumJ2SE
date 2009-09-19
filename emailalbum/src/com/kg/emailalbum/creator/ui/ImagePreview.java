@@ -22,10 +22,20 @@ public class ImagePreview extends JComponent
     int nbcols = 1;
     int nbrows = 1;
     private Map cache = new HashMap();
+    private ImageIcon iconEditComment = null;
+    private ImageIcon iconAddComment = null;
+    private ImageIcon iconDeleteComment = null;
+    private ImageIcon iconComment = null;
 
     public ImagePreview(final JFileChooser fc) {
         setPreferredSize(new Dimension(500, 500));
         fc.addPropertyChangeListener(this);
+        
+        iconEditComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_edit.gif"));
+        iconAddComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_add.gif"));
+        iconDeleteComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_delete.gif"));
+        iconComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment.gif"));
+
         this.addMouseListener(new MouseListener() {
 
             public void mouseClicked(MouseEvent arg0) {
@@ -131,6 +141,10 @@ public class ImagePreview extends JComponent
                     fontAttr.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
                     g2.setFont(Font.getFont(fontAttr));
                     g2.drawString(thumbnails[i].getDescription(), x + 2 , y + 11);
+                    g2.drawImage(iconEditComment.getImage(),
+                            x + thumbnails[i].getIconWidth() - iconEditComment.getIconWidth(),
+                            y + thumbnails[i].getIconHeight() - iconEditComment.getIconHeight(),
+                            this);
                 }
                 
             }
@@ -141,6 +155,7 @@ public class ImagePreview extends JComponent
         BufferedImage image = (BufferedImage) cache.get(file);
         if(image == null) {
             image = ImageUtil.resize(ImageIO.read(file), getSize());
+            System.gc();
             cache.put(file, image);
         }
         return image;
