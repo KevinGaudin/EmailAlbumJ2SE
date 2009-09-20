@@ -1,6 +1,7 @@
 package com.kg.emailalbum.creator.ui;
 
 import com.kg.util.ImageUtil;
+import com.kg.emailalbum.creator.EmailAlbum;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import javax.swing.*;
@@ -21,7 +22,6 @@ public class ImagePreview extends JComponent
     
     ImageIcon[] thumbnails = null;
     Rectangle[] commentIconsPositions = null;
-    Map comments = new HashMap();
     File[] files = null;
     int nbcols = 1;
     int nbrows = 1;
@@ -87,7 +87,7 @@ public class ImagePreview extends JComponent
     }
 
     private void getUserComment(int fileIndex) {
-        String oldCaption = (String) comments.get(files[fileIndex]);
+        String oldCaption = (String) EmailAlbum.captions.get(files[fileIndex]);
 
         String newCaption = (String) JOptionPane.showInputDialog(
                 null,
@@ -99,13 +99,13 @@ public class ImagePreview extends JComponent
         if (newCaption.length() == 0) {
             if(oldCaption != null)
             {
-                comments.remove(files[fileIndex]);
+                EmailAlbum.captions.remove(files[fileIndex]);
                 repaint();
             }
         } else {
             if(oldCaption == null || !oldCaption.equals(newCaption))
             {
-                comments.put(files[fileIndex], newCaption);
+                EmailAlbum.captions.put(files[fileIndex], newCaption);
                 repaint();
             }
         }
@@ -176,7 +176,7 @@ public class ImagePreview extends JComponent
                     g2.drawString(thumbnails[i].getDescription(), x + 2, y + 11);
 
                     ImageIcon iconCaption = iconEditComment;
-                    if (comments.get(files[i]) != null) {
+                    if (EmailAlbum.captions.get(files[i]) != null) {
                         iconCaption = iconComment;
                     }
                     Rectangle commentRect = new Rectangle(x + thumbnails[i].getIconWidth() - iconCaption.getIconWidth(),

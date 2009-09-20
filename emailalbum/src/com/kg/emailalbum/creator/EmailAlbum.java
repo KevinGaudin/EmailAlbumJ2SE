@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -28,6 +30,7 @@ import javax.swing.ProgressMonitor;
  * @author gaudin
  */
 public class EmailAlbum {
+    public static Map captions = new HashMap();
     public static final int DEFAULT_WIDTH = 1024;
     public static final int DEFAULT_HEIGHT = 768;
     private static final String PICTURES_ARCHIVE_PATH = "com/kg/emailalbum/viewer/pictures/";
@@ -188,6 +191,7 @@ public class EmailAlbum {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
+
         JFileChooser fileSelector = null;
         if (args.length > 0) {
             System.out.println("Using base directory : " + args[0]);
