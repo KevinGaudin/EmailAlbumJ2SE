@@ -12,12 +12,16 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ResourceBundle;
 import javax.imageio.ImageIO;
 
 public class ImagePreview extends JComponent
         implements PropertyChangeListener {
-
+    private ResourceBundle bundle = java.util.ResourceBundle.getBundle(this.getClass().getName());
+    
     ImageIcon[] thumbnails = null;
+    Rectangle[] commentIconsPositions = null;
+    Map comments = new HashMap();
     File[] files = null;
     int nbcols = 1;
     int nbrows = 1;
@@ -30,7 +34,7 @@ public class ImagePreview extends JComponent
     public ImagePreview(final JFileChooser fc) {
         setPreferredSize(new Dimension(500, 500));
         fc.addPropertyChangeListener(this);
-        
+
         iconEditComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_edit.gif"));
         iconAddComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_add.gif"));
         iconDeleteComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_delete.gif"));
@@ -44,25 +48,28 @@ public class ImagePreview extends JComponent
                 int colwidth = getWidth() / nbcols;
                 int colnum = x / colwidth;
                 System.out.println("Col : " + colnum);
-                
+
                 int rowheight = getHeight() / nbrows;
                 int rownum = y / rowheight;
                 System.out.println("Row : " + rownum);
-                
+
                 int filenumber = nbcols * rownum + colnum;
                 System.out.println("Fichier : " + files[filenumber].getName());
-                
-                File[] newSelection = new File[files.length - 1];
-                int j = 0;
-                for(int i = 0; i < files.length; i++) {
-                    if(i != filenumber) {
-                        newSelection[j] = files[i];
-                        j++;
-                    }
-                }
-                
-                fc.setSelectedFiles(newSelection);
 
+
+                if (commentIconsPositions[filenumber].contains(x, y)) {
+                    getUserComment(filenumber);
+                } else {
+                    File[] newSelection = new File[files.length - 1];
+                    int j = 0;
+                    for (int i = 0; i < files.length; i++) {
+                        if (i != filenumber) {
+                            newSelection[j] = files[i];
+                            j++;
+                        }
+                    }
+                    fc.setSelectedFiles(newSelection);
+                }
             }
 
             public void mousePressed(MouseEvent arg0) {
@@ -79,13 +86,39 @@ public class ImagePreview extends JComponent
         });
     }
 
+    private void getUserComment(int fileIndex) {
+        String oldCaption = (String) comments.get(files[fileIndex]);
+
+        String newCaption = (String) JOptionPane.showInputDialog(
+                null,
+                bundle.getString("input.caption"), oldCaption);
+        
+        if(newCaption == null) return;
+        
+        newCaption = newCaption.trim();
+        if (newCaption.length() == 0) {
+            if(oldCaption != null)
+            {
+                comments.remove(files[fileIndex]);
+                repaint();
+            }
+        } else {
+            if(oldCaption == null || !oldCaption.equals(newCaption))
+            {
+                comments.put(files[fileIndex], newCaption);
+                repaint();
+            }
+        }
+    }
+
     public void loadImages() {
         if (files == null || files.length == 0) {
             return;
         }
         thumbnails = new ImageIcon[files.length];
+        commentIconsPositions = new Rectangle[files.length];
         nbcols = (int) Math.sqrt(files.length);
-        nbrows = (int) Math.ceil((float)files.length / (float)nbcols);
+        nbrows = (int) Math.ceil((float) files.length / (float) nbcols);
         int iconWidth = getWidth() / nbcols - 2;
         int iconHeight = getHeight() / nbrows - 2;
         BufferedImage tmpIcon = null;
@@ -110,7 +143,7 @@ public class ImagePreview extends JComponent
             files = (File[]) (((JFileChooser) e.getSource()).getSelectedFiles());
             if (isShowing()) {
                 loadImages();
-                //repaint();
+            //repaint();
             }
         }
     }
@@ -123,16 +156,16 @@ public class ImagePreview extends JComponent
             loadImages();
         }
         if (thumbnails != null) {
-            for (int i = 0; i< thumbnails.length; i++) {
-                if(thumbnails[i] != null) {
+            for (int i = 0; i < thumbnails.length; i++) {
+                if (thumbnails[i] != null) {
                     int colWidth = (getWidth() / nbcols);
                     int x = (i % nbcols) * colWidth + colWidth / 2 - thumbnails[i].getIconWidth() / 2;
                     int rowHeight = getHeight() / nbrows;
-                    int y = (i / nbcols) * rowHeight + rowHeight /2 - thumbnails[i].getIconHeight() / 2;
+                    int y = (i / nbcols) * rowHeight + rowHeight / 2 - thumbnails[i].getIconHeight() / 2;
 
                     g2.setPaintMode();
                     thumbnails[i].paintIcon(this, g2, x, y);
-                    g2.setColor(new Color(0,0,0,200));
+                    g2.setColor(new Color(0, 0, 0, 200));
                     g2.fillRect(x, y, thumbnails[i].getIconWidth(), 13);
                     g2.setColor(Color.white);
                     Map fontAttr = new HashMap();
@@ -140,20 +173,30 @@ public class ImagePreview extends JComponent
                     fontAttr.put(TextAttribute.SIZE, new Float(10));
                     fontAttr.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
                     g2.setFont(Font.getFont(fontAttr));
-                    g2.drawString(thumbnails[i].getDescription(), x + 2 , y + 11);
-                    g2.drawImage(iconEditComment.getImage(),
-                            x + thumbnails[i].getIconWidth() - iconEditComment.getIconWidth(),
-                            y + thumbnails[i].getIconHeight() - iconEditComment.getIconHeight(),
+                    g2.drawString(thumbnails[i].getDescription(), x + 2, y + 11);
+
+                    ImageIcon iconCaption = iconEditComment;
+                    if (comments.get(files[i]) != null) {
+                        iconCaption = iconComment;
+                    }
+                    Rectangle commentRect = new Rectangle(x + thumbnails[i].getIconWidth() - iconCaption.getIconWidth(),
+                            y + thumbnails[i].getIconHeight() - iconCaption.getIconHeight(),
+                            iconCaption.getIconWidth(),
+                            iconCaption.getIconHeight());
+                    g2.drawImage(iconCaption.getImage(),
+                            commentRect.x,
+                            commentRect.y,
                             this);
+                    commentIconsPositions[i] = commentRect;
                 }
-                
+
             }
         }
     }
 
     private BufferedImage loadImage(File file) throws IOException {
         BufferedImage image = (BufferedImage) cache.get(file);
-        if(image == null) {
+        if (image == null) {
             image = ImageUtil.resize(ImageIO.read(file), getSize());
             System.gc();
             cache.put(file, image);
