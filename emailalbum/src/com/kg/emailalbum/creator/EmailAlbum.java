@@ -97,7 +97,11 @@ public class EmailAlbum {
 
                         picture.setImage(pic);
                         addToArchive(picture);
-                        contentFile.append(picture.getFileName()).append("\n");
+                        contentFile.append(picture.getFileName());
+                        if(captions.get(file) != null) {
+                            contentFile.append('=').append(captions.get(file));
+                        }
+                        contentFile.append("\n");
                     }
                     
                 } catch (IOException ex) {
