@@ -6,14 +6,21 @@
 package com.kg.emailalbum.viewer.ui;
 
 import com.kg.util.ImageUtil;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.font.TextAttribute;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -22,7 +29,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.SortedSet;
@@ -41,6 +50,7 @@ import javax.swing.ProgressMonitor;
 public class EmailAlbum extends javax.swing.JFrame {
 
     SortedSet pictures = new TreeSet();
+    Map captions = new HashMap();
     //Iterator iPics = null;
     Stack history = null, followers = null;
     BufferedImage currentImage = null, resizedImage = null, tmpBuf = null;
@@ -114,6 +124,13 @@ public class EmailAlbum extends javax.swing.JFrame {
 
             pics.load(getClass().getResourceAsStream("/com/kg/emailalbum/viewer/pictures/content"));
             pictures.addAll(pics.keySet());
+            Iterator iPics = pics.keySet().iterator();
+            while (iPics.hasNext()) {
+                String filename = (String) iPics.next();
+                if (pics.getProperty(filename) != null) {
+                    captions.put(filename, pics.getProperty(filename));
+                }
+            }
             start();
         } catch (IOException ex) {
             ex.printStackTrace();
@@ -170,6 +187,30 @@ public class EmailAlbum extends javax.swing.JFrame {
             int offsetY = (getHeight() - resizedImage.getHeight()) / 2;
             tmpBuf.getGraphics().drawImage(resizedImage, offsetX, offsetY, null);
             g.drawImage(tmpBuf, 0, 0, null);
+
+
+            String caption = (String) captions.get(currentImageName);
+            System.out.println("caption = " + caption);
+            if (caption != null && !"".equals(caption)) {
+                Graphics2D g2 = (Graphics2D) g;
+                Map fontAttr = new HashMap();
+                fontAttr.put(TextAttribute.FAMILY, "Sans");
+                fontAttr.put(TextAttribute.SIZE, new Float(20));
+                fontAttr.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
+                g2.setFont(Font.getFont(fontAttr));
+                FontMetrics metrics = g2.getFontMetrics();
+                Rectangle2D captionBounds = metrics.getStringBounds(caption, g2);
+                offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
+                offsetY = (getHeight() / 6) * 5;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Rectangle captionBg = new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int)captionBounds.getWidth(), (int)captionBounds.getHeight());
+                captionBg.grow(10, 10);
+                System.out.println("captionBg="+captionBg);
+                g2.setColor(new Color(0,0,0, 160));
+                g2.fillRoundRect(captionBg.x, captionBg.y, captionBg.width, captionBg.height, 10, 10);
+                g2.setColor(Color.WHITE);
+                g2.drawString(caption, offsetX, offsetY);
+            }
         }
     }
 
