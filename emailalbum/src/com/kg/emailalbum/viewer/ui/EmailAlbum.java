@@ -27,15 +27,18 @@ import java.io.IOException;
 //import java.io.PrintWriter;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.SortedSet;
 import java.util.Stack;
+import java.util.StringTokenizer;
 import java.util.TreeSet;
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -193,23 +196,68 @@ public class EmailAlbum extends javax.swing.JFrame {
             System.out.println("caption = " + caption);
             if (caption != null && !"".equals(caption)) {
                 Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
                 Map fontAttr = new HashMap();
                 fontAttr.put(TextAttribute.FAMILY, "Sans");
                 fontAttr.put(TextAttribute.SIZE, new Float(20));
                 fontAttr.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
                 g2.setFont(Font.getFont(fontAttr));
                 FontMetrics metrics = g2.getFontMetrics();
-                Rectangle2D captionBounds = metrics.getStringBounds(caption, g2);
+                int[] widths = metrics.getWidths();
+                float averageWidth = widths[0];
+                for(int i=1; i<widths.length;i++) {
+                    averageWidth += widths[i];
+                }
+                averageWidth /= widths.length;
+                int nbCharsPerLine =(int)(getWidth() / averageWidth);
+                int nbLines = caption.length() / nbCharsPerLine;
+                System.out.println("nbCharsPerLine = " + nbCharsPerLine + " / nbLines = " + nbLines);
+                int charNumberOnLine = 0;
+                ArrayList captionLines = new ArrayList();
+                StringTokenizer strTok = new StringTokenizer(caption);
+                StringBuffer sbCurLine = new StringBuffer(nbCharsPerLine);
+                while(strTok.hasMoreTokens()) {
+                    String token = strTok.nextToken();
+                    if(sbCurLine.length() + token.length() > nbCharsPerLine) {
+                        captionLines.add(sbCurLine.toString());
+                        sbCurLine = new StringBuffer(nbCharsPerLine);
+                    }
+                    sbCurLine.append(' ').append(token);
+                }
+                captionLines.add(sbCurLine.toString());
+                
+                ListIterator iLines = captionLines.listIterator(captionLines.size());
+                // there is at least one line
+                String firstLine = (String)iLines.previous();
+                Rectangle2D captionBounds = metrics.getStringBounds(firstLine, g2);
                 offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
                 offsetY = (getHeight() / 6) * 5;
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 Rectangle captionBg = new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int)captionBounds.getWidth(), (int)captionBounds.getHeight());
+                while (iLines.hasPrevious()) {
+                    String curLine = (String)iLines.previous();
+                    captionBounds = metrics.getStringBounds(curLine, g2);
+                    offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
+                    offsetY = offsetY - metrics.getHeight() - 3;
+                    captionBg.add(new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int)captionBounds.getWidth(), (int)captionBounds.getHeight()));
+                }
                 captionBg.grow(10, 10);
-                System.out.println("captionBg="+captionBg);
                 g2.setColor(new Color(0,0,0, 160));
                 g2.fillRoundRect(captionBg.x, captionBg.y, captionBg.width, captionBg.height, 10, 10);
                 g2.setColor(Color.WHITE);
-                g2.drawString(caption, offsetX, offsetY);
+                
+                captionBounds = metrics.getStringBounds(firstLine, g2);
+                offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
+                offsetY = (getHeight() / 6) * 5;
+                g2.drawString(firstLine, offsetX, offsetY);
+                iLines = captionLines.listIterator(captionLines.size()-1);
+                while(iLines.hasPrevious()){
+                    String curLine = (String)iLines.previous();
+                    captionBounds = metrics.getStringBounds(curLine, g2);
+                    offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
+                    offsetY = offsetY - metrics.getHeight() - 3;
+                    g2.drawString(curLine, offsetX, offsetY);
+                }
             }
         }
     }
