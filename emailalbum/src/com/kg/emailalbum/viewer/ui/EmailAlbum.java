@@ -232,7 +232,7 @@ public class EmailAlbum extends javax.swing.JFrame {
                 String firstLine = (String)iLines.previous();
                 Rectangle2D captionBounds = metrics.getStringBounds(firstLine, g2);
                 offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
-                offsetY = (getHeight() / 6) * 5;
+                offsetY = getHeight() * 7/8;
                 Rectangle captionBg = new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int)captionBounds.getWidth(), (int)captionBounds.getHeight());
                 while (iLines.hasPrevious()) {
                     String curLine = (String)iLines.previous();
@@ -248,7 +248,7 @@ public class EmailAlbum extends javax.swing.JFrame {
                 
                 captionBounds = metrics.getStringBounds(firstLine, g2);
                 offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
-                offsetY = (getHeight() / 6) * 5;
+                offsetY = getHeight() * 7/8;
                 g2.drawString(firstLine, offsetX, offsetY);
                 iLines = captionLines.listIterator(captionLines.size()-1);
                 while(iLines.hasPrevious()){
