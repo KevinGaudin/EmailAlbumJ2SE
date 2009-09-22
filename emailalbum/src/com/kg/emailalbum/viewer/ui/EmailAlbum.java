@@ -189,15 +189,14 @@ public class EmailAlbum extends javax.swing.JFrame {
             int offsetX = (getWidth() - resizedImage.getWidth()) / 2;
             int offsetY = (getHeight() - resizedImage.getHeight()) / 2;
             tmpBuf.getGraphics().drawImage(resizedImage, offsetX, offsetY, null);
-            g.drawImage(tmpBuf, 0, 0, null);
 
 
             String caption = (String) captions.get(currentImageName);
             System.out.println("caption = " + caption);
             if (caption != null && !"".equals(caption)) {
-                Graphics2D g2 = (Graphics2D) g;
+                Graphics2D g2 = (Graphics2D) tmpBuf.getGraphics();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                
+
                 Map fontAttr = new HashMap();
                 fontAttr.put(TextAttribute.FAMILY, "Sans");
                 fontAttr.put(TextAttribute.SIZE, new Float(20));
@@ -206,59 +205,60 @@ public class EmailAlbum extends javax.swing.JFrame {
                 FontMetrics metrics = g2.getFontMetrics();
                 int[] widths = metrics.getWidths();
                 float averageWidth = widths[0];
-                for(int i=1; i<widths.length;i++) {
+                for (int i = 1; i < widths.length; i++) {
                     averageWidth += widths[i];
                 }
                 averageWidth /= widths.length;
-                int nbCharsPerLine =(int)(getWidth() / averageWidth);
+                int nbCharsPerLine = (int) (getWidth() / averageWidth);
                 int nbLines = caption.length() / nbCharsPerLine;
                 System.out.println("nbCharsPerLine = " + nbCharsPerLine + " / nbLines = " + nbLines);
                 int charNumberOnLine = 0;
                 ArrayList captionLines = new ArrayList();
                 StringTokenizer strTok = new StringTokenizer(caption);
                 StringBuffer sbCurLine = new StringBuffer(nbCharsPerLine);
-                while(strTok.hasMoreTokens()) {
+                while (strTok.hasMoreTokens()) {
                     String token = strTok.nextToken();
-                    if(sbCurLine.length() + token.length() > nbCharsPerLine) {
+                    if (sbCurLine.length() + token.length() > nbCharsPerLine) {
                         captionLines.add(sbCurLine.toString());
                         sbCurLine = new StringBuffer(nbCharsPerLine);
                     }
                     sbCurLine.append(' ').append(token);
                 }
                 captionLines.add(sbCurLine.toString());
-                
+
                 ListIterator iLines = captionLines.listIterator(captionLines.size());
                 // there is at least one line
-                String firstLine = (String)iLines.previous();
+                String firstLine = (String) iLines.previous();
                 Rectangle2D captionBounds = metrics.getStringBounds(firstLine, g2);
-                offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
-                offsetY = getHeight() * 7/8;
-                Rectangle captionBg = new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int)captionBounds.getWidth(), (int)captionBounds.getHeight());
+                offsetX = (getWidth() - (int) captionBounds.getWidth()) / 2;
+                offsetY = getHeight() * 7 / 8;
+                Rectangle captionBg = new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int) captionBounds.getWidth(), (int) captionBounds.getHeight());
                 while (iLines.hasPrevious()) {
-                    String curLine = (String)iLines.previous();
+                    String curLine = (String) iLines.previous();
                     captionBounds = metrics.getStringBounds(curLine, g2);
-                    offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
+                    offsetX = (getWidth() - (int) captionBounds.getWidth()) / 2;
                     offsetY = offsetY - metrics.getHeight() - 3;
-                    captionBg.add(new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int)captionBounds.getWidth(), (int)captionBounds.getHeight()));
+                    captionBg.add(new Rectangle(offsetX, offsetY - metrics.getMaxAscent(), (int) captionBounds.getWidth(), (int) captionBounds.getHeight()));
                 }
                 captionBg.grow(10, 10);
-                g2.setColor(new Color(0,0,0, 160));
-                g2.fillRoundRect(captionBg.x, captionBg.y, captionBg.width, captionBg.height, 10, 10);
+                g2.setColor(new Color(70, 70, 70, 160));
+                g2.fillRoundRect(captionBg.x, captionBg.y, captionBg.width, captionBg.height, 20, 20);
                 g2.setColor(Color.WHITE);
-                
+
                 captionBounds = metrics.getStringBounds(firstLine, g2);
-                offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
-                offsetY = getHeight() * 7/8;
+                offsetX = (getWidth() - (int) captionBounds.getWidth()) / 2;
+                offsetY = getHeight() * 7 / 8;
                 g2.drawString(firstLine, offsetX, offsetY);
-                iLines = captionLines.listIterator(captionLines.size()-1);
-                while(iLines.hasPrevious()){
-                    String curLine = (String)iLines.previous();
+                iLines = captionLines.listIterator(captionLines.size() - 1);
+                while (iLines.hasPrevious()) {
+                    String curLine = (String) iLines.previous();
                     captionBounds = metrics.getStringBounds(curLine, g2);
-                    offsetX = (getWidth() - (int)captionBounds.getWidth()) / 2;
+                    offsetX = (getWidth() - (int) captionBounds.getWidth()) / 2;
                     offsetY = offsetY - metrics.getHeight() - 3;
                     g2.drawString(curLine, offsetX, offsetY);
                 }
             }
+            g.drawImage(tmpBuf, 0, 0, null);
         }
     }
 
