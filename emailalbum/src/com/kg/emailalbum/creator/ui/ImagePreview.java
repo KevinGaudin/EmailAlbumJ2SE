@@ -18,27 +18,26 @@ import javax.imageio.ImageIO;
 
 public class ImagePreview extends JComponent
         implements PropertyChangeListener {
+
     private ResourceBundle bundle = java.util.ResourceBundle.getBundle(this.getClass().getName());
-    
     ImageIcon[] thumbnails = null;
     Rectangle[] commentIconsPositions = null;
+    Rectangle[] unselectIconsPositions = null;
     File[] files = null;
     int nbcols = 1;
     int nbrows = 1;
     private Map cache = new HashMap();
     private ImageIcon iconEditComment = null;
-    private ImageIcon iconAddComment = null;
-    private ImageIcon iconDeleteComment = null;
     private ImageIcon iconComment = null;
+    private ImageIcon iconUnselect = null;
 
     public ImagePreview(final JFileChooser fc) {
         setPreferredSize(new Dimension(500, 500));
         fc.addPropertyChangeListener(this);
 
         iconEditComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_edit.gif"));
-        iconAddComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_add.gif"));
-        iconDeleteComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment_delete.gif"));
         iconComment = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/comment.gif"));
+        iconUnselect = new ImageIcon(getClass().getResource("/com/kg/emailalbum/creator/ui/cross.gif"));
 
         this.addMouseListener(new MouseListener() {
 
@@ -59,7 +58,7 @@ public class ImagePreview extends JComponent
 
                 if (commentIconsPositions[filenumber].contains(x, y)) {
                     getUserComment(filenumber);
-                } else {
+                } else if(unselectIconsPositions[filenumber].contains(x, y)){
                     File[] newSelection = new File[files.length - 1];
                     int j = 0;
                     for (int i = 0; i < files.length; i++) {
@@ -92,19 +91,18 @@ public class ImagePreview extends JComponent
         String newCaption = (String) JOptionPane.showInputDialog(
                 null,
                 bundle.getString("input.caption"), oldCaption);
-        
-        if(newCaption == null) return;
-        
+
+        if (newCaption == null) {
+            return;
+        }
         newCaption = newCaption.trim();
         if (newCaption.length() == 0) {
-            if(oldCaption != null)
-            {
+            if (oldCaption != null) {
                 EmailAlbum.captions.remove(files[fileIndex]);
                 repaint();
             }
         } else {
-            if(oldCaption == null || !oldCaption.equals(newCaption))
-            {
+            if (oldCaption == null || !oldCaption.equals(newCaption)) {
                 EmailAlbum.captions.put(files[fileIndex], newCaption);
                 repaint();
             }
@@ -117,6 +115,7 @@ public class ImagePreview extends JComponent
         }
         thumbnails = new ImageIcon[files.length];
         commentIconsPositions = new Rectangle[files.length];
+        unselectIconsPositions = new Rectangle[files.length];
         nbcols = (int) Math.sqrt(files.length);
         nbrows = (int) Math.ceil((float) files.length / (float) nbcols);
         int iconWidth = getWidth() / nbcols - 2;
@@ -166,14 +165,18 @@ public class ImagePreview extends JComponent
                     g2.setPaintMode();
                     thumbnails[i].paintIcon(this, g2, x, y);
                     g2.setColor(new Color(0, 0, 0, 200));
-                    g2.fillRect(x, y, thumbnails[i].getIconWidth(), 13);
+                    g2.fillRect(x, y, thumbnails[i].getIconWidth(), 16);
                     g2.setColor(Color.white);
                     Map fontAttr = new HashMap();
                     fontAttr.put(TextAttribute.FAMILY, "Dialog");
                     fontAttr.put(TextAttribute.SIZE, new Float(10));
                     fontAttr.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_BOLD);
                     g2.setFont(Font.getFont(fontAttr));
-                    g2.drawString(thumbnails[i].getDescription(), x + 2, y + 11);
+                    g2.drawString(thumbnails[i].getDescription(), x + 2, y + 12);
+
+                    Rectangle unselectRect = new Rectangle(x + thumbnails[i].getIconWidth() - iconUnselect.getIconWidth(), y, iconUnselect.getIconWidth(), iconUnselect.getIconHeight());
+                    iconUnselect.paintIcon(this, g2, unselectRect.x, unselectRect.y);
+                    unselectIconsPositions[i] = unselectRect;
 
                     ImageIcon iconCaption = iconEditComment;
                     if (EmailAlbum.captions.get(files[i]) != null) {
