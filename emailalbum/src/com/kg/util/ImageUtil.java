@@ -37,7 +37,7 @@ public class ImageUtil {
      */
     public static BufferedImage resize(BufferedImage img, Dimension dim) {
         double newW = dim.getWidth();
-        double newH = dim.getHeight();
+        double newH = dim.getHeight();        
         if (img != null && (newH != 0 && newW != 0)) {
             int w = img.getWidth();
             int h = img.getHeight();
@@ -49,6 +49,13 @@ public class ImageUtil {
                 newH = (int) (newW / imageFactor);
             } else if (newImageFactor > imageFactor) {
                 newW = (int) (newH * imageFactor);
+            }
+            
+            // Don't zoom too much
+            double zoom = newH / h;
+            if(zoom > 1.25) {
+                newH = 1.25 * h;
+                newW = 1.25 * w;
             }
 
             BufferedImage dimg = new BufferedImage((int) newW, (int) newH, BufferedImage.TYPE_INT_ARGB);
