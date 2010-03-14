@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout android:id="@+id/content_row_layout" android:layout_width="fill_parent" android:layout_height="fill_parent" xmlns:android="http://schemas.android.com/apk/res/android">
-<ImageView android:id="@+id/thumbnail" android:layout_width="wrap_content" android:layout_height="wrap_content" android:src="@drawable/robot" android:background="@drawable/picture_frame" android:adjustViewBounds="true" android:minWidth="80px"></ImageView>
-<TextView android:text="TextView01" android:id="@+id/image_name"
-	android:layout_width="fill_parent" android:layout_height="wrap_content"></TextView>
-</LinearLayout>
